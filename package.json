@@ -3,13 +3,24 @@
   "version": "1.0.0",
   "main": "index.ts",
   "dependencies": {
+    "@expo/metro-config": "~57.0.0",
+    "@expo/metro-runtime": "~57.0.16",
+    "babel-preset-expo": "~57.0.0",
     "expo": "~57.0.24",
     "expo-status-bar": "~57.0.1",
+    "lucide-react-native": "^1.47.0",
+    "nativewind": "^4.2.7",
     "react": "19.2.3",
-    "react-native": "0.86.3"
+    "react-dom": "19.2.3",
+    "react-native": "0.86.3",
+    "react-native-reanimated": "^4.7.0",
+    "react-native-safe-area-context": "^5.10.0",
+    "react-native-svg": "^15.15.5",
+    "react-native-web": "^0.21.2"
   },
   "devDependencies": {
     "@types/react": "~19.2.2",
+    "tailwindcss": "^3.4.19",
     "typescript": "~6.0.3"
   },
   "scripts": {
