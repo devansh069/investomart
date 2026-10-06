@@ -248,4 +248,31 @@ export const allAmenitiesList = [
   'CCTV Surveillance',
 ];
 
-export const indianCities = ['All Cities', 'Bangalore', 'Mumbai', 'Pune', 'Hyderabad', 'Delhi-NCR'];
+export const indianCities = [
+  'All Cities',
+  'New Delhi, India',
+  'Bangalore',
+  'Mumbai',
+  'Gurugram',
+  'Noida',
+  'Hyderabad',
+  'Pune',
+  'Chennai',
+  'Kolkata',
+  'Ahmedabad',
+  'Jaipur',
+  'Chandigarh',
+  'Kochi',
+  'Goa',
+  'Indore',
+  'Lucknow',
+  'Coimbatore',
+  'Surat',
+  'Vadodara',
+  'Nagpur',
+  'Bhopal',
+  'Visakhapatnam',
+  'Thane',
+  'Navi Mumbai',
+  'Greater Noida',
+];
