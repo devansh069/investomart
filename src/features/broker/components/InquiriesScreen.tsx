@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Alert, Linking } from 'react-native';
-import { Inquiry } from '../types';
+import { Inquiry } from '../../../types';
 import { Phone, MessageSquare, Calendar, User, CheckCircle2 } from 'lucide-react-native';
 
 interface InquiriesScreenProps {

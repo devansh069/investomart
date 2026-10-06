@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, Image, ScrollView, TouchableOpacity, Modal, Alert, Linking } from 'react-native';
-import { Property } from '../types';
+import { View, Text, Image, ScrollView, TouchableOpacity, Modal, Alert, Linking, Share } from 'react-native';
+import { Property } from '../../../types';
 import {
   X,
   MapPin,
@@ -22,6 +22,7 @@ interface PropertyDetailModalProps {
   visible: boolean;
   onClose: () => void;
   onApplyRent: (property: Property) => void;
+  onOpenMessages: () => void;
 }
 
 export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
@@ -29,6 +30,7 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
   visible,
   onClose,
   onApplyRent,
+  onOpenMessages,
 }) => {
   const [activeImageIndex, setActiveImageIndex] = useState(0);
 
@@ -44,15 +46,8 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
   };
 
   const handleWhatsApp = () => {
-    Alert.alert('Send Inquiry', `Start WhatsApp conversation with ${property.builderName} regarding "${property.title}"?`, [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Open Chat',
-        onPress: () => {
-          Alert.alert('Chat Initiated', `Prototype message created: "Hello ${property.builderName}, I am interested in renting ${property.title}."`);
-        },
-      },
-    ]);
+    onClose();
+    onOpenMessages();
   };
 
   const handleVideoTour = () => {
@@ -79,7 +74,7 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
           </Text>
 
           <TouchableOpacity
-            onPress={() => Alert.alert('Share', `Share link for ${property.title} copied!`)}
+            onPress={() => Share.share({ message: `Check out ${property.title} in ${property.city} for ₹${property.rent.toLocaleString('en-IN')}/month on InvestoMart.` })}
             className="w-9 h-9 rounded-full bg-slate-100 items-center justify-center"
           >
             <Share2 size={16} color="#1e293b" />
@@ -123,7 +118,7 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
                   key={idx}
                   onPress={() => setActiveImageIndex(idx)}
                   className={`mr-2 rounded-xl overflow-hidden border-2 ${
-                    activeImageIndex === idx ? 'border-blue-600' : 'border-transparent'
+                    activeImageIndex === idx ? 'border-slate-950' : 'border-transparent'
                   }`}
                 >
                   <Image source={{ uri: img }} className="w-16 h-12" resizeMode="cover" />
@@ -156,10 +151,10 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
             </Text>
 
             {/* Location & Address */}
-            <View className="flex-row items-start mb-5 bg-blue-50/60 p-3 rounded-2xl border border-blue-100">
-              <MapPin size={16} color="#2563eb" className="mt-0.5" />
+            <View className="flex-row items-start mb-5 bg-slate-50 p-3 rounded-2xl border border-slate-200">
+              <MapPin size={16} color="#111827" className="mt-0.5" />
               <View className="ml-2 flex-1">
-                <Text className="text-xs font-bold text-blue-900">
+                <Text className="text-xs font-bold text-slate-900">
                   {property.location}, {property.city}
                 </Text>
                 <Text className="text-[11px] text-slate-500 mt-0.5 leading-normal">
@@ -174,7 +169,7 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
             </Text>
             <View className="flex-row flex-wrap justify-between mb-5">
               <View className="w-[48%] bg-slate-50 p-3 rounded-2xl border border-slate-100 mb-2.5 flex-row items-center">
-                <BedDouble size={20} color="#2563eb" />
+                <BedDouble size={20} color="#111827" />
                 <View className="ml-2.5">
                   <Text className="text-[10px] font-medium text-slate-500">Configuration</Text>
                   <Text className="text-sm font-bold text-slate-800">{property.bhk} BHK</Text>
@@ -182,7 +177,7 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
               </View>
 
               <View className="w-[48%] bg-slate-50 p-3 rounded-2xl border border-slate-100 mb-2.5 flex-row items-center">
-                <Maximize size={20} color="#2563eb" />
+                <Maximize size={20} color="#111827" />
                 <View className="ml-2.5">
                   <Text className="text-[10px] font-medium text-slate-500">Super Built-up</Text>
                   <Text className="text-sm font-bold text-slate-800">{property.areaSqft} sq.ft</Text>
@@ -190,7 +185,7 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
               </View>
 
               <View className="w-[48%] bg-slate-50 p-3 rounded-2xl border border-slate-100 flex-row items-center">
-                <Layers size={20} color="#2563eb" />
+                <Layers size={20} color="#111827" />
                 <View className="ml-2.5">
                   <Text className="text-[10px] font-medium text-slate-500">Furnishing</Text>
                   <Text className="text-sm font-bold text-slate-800">{property.furnishing}</Text>
@@ -198,7 +193,7 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
               </View>
 
               <View className="w-[48%] bg-slate-50 p-3 rounded-2xl border border-slate-100 flex-row items-center">
-                <Calendar size={20} color="#2563eb" />
+                <Calendar size={20} color="#111827" />
                 <View className="ml-2.5">
                   <Text className="text-[10px] font-medium text-slate-500">Availability</Text>
                   <Text className="text-sm font-bold text-emerald-600">Immediate</Text>
@@ -237,7 +232,7 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
             <View className="bg-slate-50 p-4 rounded-3xl border border-slate-200/80 mb-6">
               <View className="flex-row items-center justify-between mb-3">
                 <View className="flex-row items-center flex-1">
-                  <View className="w-12 h-12 rounded-2xl bg-blue-600 items-center justify-center shadow-xs">
+                  <View className="w-12 h-12 rounded-2xl bg-slate-950 items-center justify-center shadow-xs">
                     <Text className="text-white font-extrabold text-lg">
                       {property.builderName.charAt(0)}
                     </Text>
@@ -262,7 +257,7 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
                   onPress={handleCall}
                   className="flex-1 bg-white border border-slate-200 py-2.5 rounded-xl flex-row items-center justify-center shadow-xs"
                 >
-                  <Phone size={15} color="#2563eb" />
+                  <Phone size={15} color="#111827" />
                   <Text className="text-xs font-bold text-slate-800 ml-1.5">Direct Call</Text>
                 </TouchableOpacity>
 
@@ -271,7 +266,7 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
                   className="flex-1 bg-emerald-50 border border-emerald-200 py-2.5 rounded-xl flex-row items-center justify-center ml-2"
                 >
                   <MessageSquare size={15} color="#059669" />
-                  <Text className="text-xs font-bold text-emerald-800 ml-1.5">WhatsApp / Chat</Text>
+                  <Text className="text-xs font-bold text-emerald-800 ml-1.5">Message broker</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -290,7 +285,7 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
           <TouchableOpacity
             onPress={() => onApplyRent(property)}
             activeOpacity={0.85}
-            className="bg-blue-600 px-7 py-3.5 rounded-2xl flex-row items-center shadow-md shadow-blue-500/25"
+            className="bg-slate-950 px-7 py-3.5 rounded-2xl flex-row items-center"
           >
             <Sparkles size={16} color="#ffffff" />
             <Text className="text-white font-bold text-sm ml-2">Apply for Rent</Text>

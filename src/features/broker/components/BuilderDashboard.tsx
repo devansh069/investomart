@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Alert, Image } from 'react-native';
-import { Property, Inquiry } from '../types';
-import { Plus, Eye, CheckCircle2, MessageSquare, Trash2, BedDouble, MapPin } from 'lucide-react-native';
+import { Property, Inquiry } from '../../../types';
+import { Plus, Eye, CheckCircle2, MessageSquare, Trash2, BedDouble, MapPin, Crown } from 'lucide-react-native';
 
 interface BuilderDashboardProps {
   properties: Property[];
@@ -23,8 +23,11 @@ export const BuilderDashboard: React.FC<BuilderDashboardProps> = ({
   builderName,
 }) => {
   const totalListings = properties.length;
-  const availableListings = properties.filter((p) => p.status === 'AVAILABLE').length;
+  const activeListings = properties.filter((p) => p.status === 'ACTIVE').length;
+  const pausedListings = properties.filter((p) => p.status === 'PAUSED' || p.status === 'EXPIRED' || p.status === 'SUBSCRIPTION_PAUSED').length;
   const totalInquiries = inquiries.length;
+  const freeListingLimit = 10;
+  const remainingFreeSlots = Math.max(0, freeListingLimit - activeListings);
 
   return (
     <ScrollView className="flex-1 bg-slate-50 px-5 pt-3" showsVerticalScrollIndicator={false}>
@@ -38,7 +41,7 @@ export const BuilderDashboard: React.FC<BuilderDashboardProps> = ({
         <TouchableOpacity
           onPress={onOpenAddModal}
           activeOpacity={0.85}
-          className="bg-blue-600 px-3.5 py-2 rounded-xl flex-row items-center shadow-xs"
+          className="bg-slate-950 px-3.5 py-2 rounded-xl flex-row items-center"
         >
           <Plus size={15} color="#ffffff" />
           <Text className="text-white text-xs font-bold ml-1">Add Property</Text>
@@ -50,22 +53,35 @@ export const BuilderDashboard: React.FC<BuilderDashboardProps> = ({
         <View className="flex-1 bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-xs mr-2">
           <Text className="text-[11px] font-medium text-slate-500">Total Listed</Text>
           <Text className="text-2xl font-black text-slate-900 mt-1">{totalListings}</Text>
-          <Text className="text-[10px] text-emerald-600 font-semibold mt-0.5">{availableListings} Active</Text>
+          <Text className="text-[10px] text-emerald-600 font-semibold mt-0.5">{activeListings} Active</Text>
         </View>
 
         <View className="flex-1 bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-xs mr-2">
           <Text className="text-[11px] font-medium text-slate-500">Inquiries</Text>
-          <Text className="text-2xl font-black text-blue-600 mt-1">{totalInquiries}</Text>
-          <Text className="text-[10px] text-blue-600 font-semibold mt-0.5">Leads to follow up</Text>
+          <Text className="text-2xl font-black text-slate-950 mt-1">{totalInquiries}</Text>
+          <Text className="text-[10px] text-slate-600 font-semibold mt-0.5">Leads to follow up</Text>
         </View>
 
         <View className="flex-1 bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-xs">
           <Text className="text-[11px] font-medium text-slate-500">Occupancy</Text>
           <Text className="text-2xl font-black text-emerald-600 mt-1">
-            {totalListings > 0 ? Math.round(((totalListings - availableListings) / totalListings) * 100) : 0}%
+            {totalListings > 0 ? Math.round(((totalListings - activeListings) / totalListings) * 100) : 0}%
           </Text>
           <Text className="text-[10px] text-slate-500 font-semibold mt-0.5">Rented units</Text>
         </View>
+      </View>
+
+      <View className="bg-slate-950 rounded-3xl p-4 mb-5 overflow-hidden">
+        <View className="absolute -right-5 -top-5 w-24 h-24 rounded-full bg-amber-400/20" />
+        <View className="flex-row items-center justify-between">
+          <View className="flex-1 mr-3">
+            <View className="flex-row items-center"><Crown size={15} color="#fbbf24" /><Text className="ml-1.5 text-xs font-bold text-amber-300">FREE LISTING PLAN</Text></View>
+            <Text className="text-white text-lg font-black mt-1">{activeListings} / {freeListingLimit} active listings</Text>
+            <Text className="text-slate-300 text-xs mt-1">{remainingFreeSlots} slots left. Upgrade to Pro for 20 more at ₹500/month.</Text>
+          </View>
+          <View className="bg-white/10 rounded-2xl px-3 py-2"><Text className="text-white text-xs font-bold">Pro</Text><Text className="text-amber-300 text-[10px] font-semibold">+20 slots</Text></View>
+        </View>
+        {pausedListings > 0 && <Text className="mt-3 text-[11px] font-semibold text-amber-200">{pausedListings} listing{pausedListings === 1 ? '' : 's'} paused or expired - continue them when capacity is available.</Text>}
       </View>
 
       {/* Property Listings Management Header */}
@@ -96,12 +112,12 @@ export const BuilderDashboard: React.FC<BuilderDashboardProps> = ({
                   <TouchableOpacity
                     onPress={() => onToggleStatus(prop.id)}
                     className={`px-2 py-0.5 rounded-md ${
-                      prop.status === 'AVAILABLE' ? 'bg-emerald-50 border border-emerald-200' : 'bg-slate-100'
+                      prop.status === 'ACTIVE' ? 'bg-emerald-50 border border-emerald-200' : prop.status === 'RENTED' ? 'bg-slate-100' : 'bg-amber-50 border border-amber-200'
                     }`}
                   >
                     <Text
                       className={`text-[9px] font-black uppercase ${
-                        prop.status === 'AVAILABLE' ? 'text-emerald-700' : 'text-slate-600'
+                        prop.status === 'ACTIVE' ? 'text-emerald-700' : prop.status === 'RENTED' ? 'text-slate-600' : 'text-amber-700'
                       }`}
                     >
                       {prop.status}
@@ -144,7 +160,7 @@ export const BuilderDashboard: React.FC<BuilderDashboardProps> = ({
               onPress={() => {
                 Alert.alert(
                   'Mark Status',
-                  `Switch status of "${prop.title}" to ${prop.status === 'AVAILABLE' ? 'RENTED' : 'AVAILABLE'}?`,
+                  `Switch status of "${prop.title}" to ${prop.status === 'ACTIVE' ? 'PAUSED' : 'ACTIVE'}?`,
                   [
                     { text: 'Cancel', style: 'cancel' },
                     { text: 'Change', onPress: () => onToggleStatus(prop.id) },

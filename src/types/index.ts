@@ -12,6 +12,7 @@ export interface User {
 
 export type PropertyType = 'Apartment' | 'Villa' | 'Independent House' | 'Studio Apartment' | 'Penthouse';
 export type FurnishingType = 'Fully Furnished' | 'Semi-Furnished' | 'Unfurnished';
+export type PropertyStatus = 'ACTIVE' | 'PAUSED' | 'RENTED' | 'EXPIRED' | 'SUBSCRIPTION_PAUSED';
 
 export interface Property {
   id: string;
@@ -34,7 +35,7 @@ export interface Property {
   imageUrl: string;
   additionalImages?: string[];
   hasVideo: boolean;
-  status: 'AVAILABLE' | 'RENTED';
+  status: PropertyStatus;
   postedDate: string;
 }
 

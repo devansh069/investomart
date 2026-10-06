@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Modal, ScrollView } from 'react-native';
-import { User, UserRole } from '../types';
-import { mockUsers } from '../mock/data';
+import { User, UserRole } from '../../../types';
+import { mockUsers } from '../../../mock/data';
 import { Building2, UserCircle, X, ShieldCheck, Mail, Lock, Phone } from 'lucide-react-native';
 
 interface AuthModalProps {

@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
-import { User } from '../types';
+import { User } from '../../types';
 import { Building, ArrowLeftRight, UserCircle } from 'lucide-react-native';
 
 interface HeaderProps {

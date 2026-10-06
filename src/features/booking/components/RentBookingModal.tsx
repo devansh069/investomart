@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Modal, ScrollView, Alert } from 'react-native';
-import { Property, Inquiry } from '../types';
+import { Property, Inquiry } from '../../../types';
 import { X, CheckCircle, CreditCard, ShieldCheck, ArrowRight } from 'lucide-react-native';
 
 interface RentBookingModalProps {
@@ -162,7 +162,7 @@ export const RentBookingModal: React.FC<RentBookingModalProps> = ({
                 <TouchableOpacity
                   onPress={handleProceedToPayment}
                   activeOpacity={0.85}
-                  className="bg-blue-600 py-3.5 rounded-2xl flex-row items-center justify-center shadow-md shadow-blue-500/20 mb-4"
+                  className="bg-slate-950 py-3.5 rounded-2xl flex-row items-center justify-center mb-4"
                 >
                   <Text className="text-white font-bold text-sm mr-2">Proceed to Token Payment</Text>
                   <ArrowRight size={16} color="#ffffff" />
@@ -322,7 +322,7 @@ export const RentBookingModal: React.FC<RentBookingModalProps> = ({
                 <TouchableOpacity
                   onPress={handleFinish}
                   activeOpacity={0.85}
-                  className="w-full bg-blue-600 py-3.5 rounded-2xl items-center shadow-md shadow-blue-500/20"
+                  className="w-full bg-slate-950 py-3.5 rounded-2xl items-center"
                 >
                   <Text className="text-white font-bold text-sm">Done & Return to Explorer</Text>
                 </TouchableOpacity>

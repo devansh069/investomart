@@ -43,7 +43,7 @@ export const initialProperties: Property[] = [
       'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=80'
     ],
     hasVideo: true,
-    status: 'AVAILABLE',
+    status: 'ACTIVE',
     postedDate: '2 days ago',
   },
   {
@@ -69,7 +69,7 @@ export const initialProperties: Property[] = [
       'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=800&q=80'
     ],
     hasVideo: false,
-    status: 'AVAILABLE',
+    status: 'ACTIVE',
     postedDate: 'Yesterday',
   },
   {
@@ -95,7 +95,7 @@ export const initialProperties: Property[] = [
       'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=800&q=80'
     ],
     hasVideo: true,
-    status: 'AVAILABLE',
+    status: 'ACTIVE',
     postedDate: '3 days ago',
   },
   {
@@ -119,7 +119,7 @@ export const initialProperties: Property[] = [
     imageUrl: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1000&q=80',
     additionalImages: [],
     hasVideo: false,
-    status: 'AVAILABLE',
+    status: 'PAUSED',
     postedDate: '4 days ago',
   },
   {
@@ -143,7 +143,7 @@ export const initialProperties: Property[] = [
     imageUrl: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=1000&q=80',
     additionalImages: [],
     hasVideo: true,
-    status: 'AVAILABLE',
+    status: 'RENTED',
     postedDate: 'Just now',
   },
 ];

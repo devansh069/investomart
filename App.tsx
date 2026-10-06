@@ -7,18 +7,18 @@ import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { User, Property, Inquiry, FilterState } from './src/types';
 import { initialProperties, initialInquiries, mockUsers } from './src/mock/data';
 
-import { Header } from './src/components/Header';
-import { BottomNav, CustomerTabKey, BuilderTabKey } from './src/components/BottomNav';
-import { CustomerHome } from './src/components/CustomerHome';
-import { PropertyDetailModal } from './src/components/PropertyDetailModal';
-import { RentBookingModal } from './src/components/RentBookingModal';
-import { FilterModal } from './src/components/FilterModal';
-import { AuthModal } from './src/components/AuthModal';
-import { AddPropertyModal } from './src/components/AddPropertyModal';
-import { BuilderDashboard } from './src/components/BuilderDashboard';
-import { InquiriesScreen } from './src/components/InquiriesScreen';
-import { GovtResourcesScreen } from './src/components/GovtResourcesScreen';
-import { ProfileScreen } from './src/components/ProfileScreen';
+import { BottomNav, CustomerTabKey, BuilderTabKey } from './src/shared/components/BottomNav';
+import { CustomerHome } from './src/features/discovery/components/CustomerHome';
+import { PropertyDetailModal } from './src/features/discovery/components/PropertyDetailModal';
+import { RentBookingModal } from './src/features/booking/components/RentBookingModal';
+import { FilterModal } from './src/features/discovery/components/FilterModal';
+import { AuthModal } from './src/features/auth/components/AuthModal';
+import { AddPropertyModal } from './src/features/broker/components/AddPropertyModal';
+import { BuilderDashboard } from './src/features/broker/components/BuilderDashboard';
+import { InquiriesScreen } from './src/features/broker/components/InquiriesScreen';
+import { GovtResourcesScreen } from './src/features/resources/components/GovtResourcesScreen';
+import { ProfileScreen } from './src/features/profile/components/ProfileScreen';
+import { MessagesScreen } from './src/features/messaging/components/MessagesScreen';
 
 const defaultFilters: FilterState = {
   city: 'All Cities',
@@ -36,8 +36,8 @@ export default function App() {
   const [inquiries, setInquiries] = useState<Inquiry[]>(initialInquiries);
 
   // Active navigation tabs
-  const [activeCustomerTab, setActiveCustomerTab] = useState<CustomerTabKey>('explore');
-  const [activeBuilderTab, setActiveBuilderTab] = useState<BuilderTabKey>('listings');
+  const [activeCustomerTab, setActiveCustomerTab] = useState<CustomerTabKey>('home');
+  const [activeBuilderTab, setActiveBuilderTab] = useState<BuilderTabKey>('home');
 
   // Modals state
   const [authModalVisible, setAuthModalVisible] = useState(false);
@@ -48,15 +48,16 @@ export default function App() {
 
   // Search & Filters state
   const [filters, setFilters] = useState<FilterState>(defaultFilters);
+  const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
 
   // Handlers
   const handleToggleRole = () => {
     if (currentUser.role === 'customer') {
       setCurrentUser(mockUsers.builder);
-      setActiveBuilderTab('listings');
+      setActiveBuilderTab('home');
     } else {
       setCurrentUser(mockUsers.customer);
-      setActiveCustomerTab('explore');
+      setActiveCustomerTab('home');
     }
   };
 
@@ -71,7 +72,7 @@ export default function App() {
   const handleTogglePropertyStatus = (id: string) => {
     setProperties(
       properties.map((p) =>
-        p.id === id ? { ...p, status: p.status === 'AVAILABLE' ? 'RENTED' : 'AVAILABLE' } : p
+        p.id === id ? { ...p, status: p.status === 'ACTIVE' ? 'PAUSED' : 'ACTIVE' } : p
       )
     );
   };
@@ -90,7 +91,31 @@ export default function App() {
   const renderScreenContent = () => {
     if (currentUser.role === 'customer') {
       switch (activeCustomerTab) {
+        case 'home':
+          return (
+            <CustomerHome
+              properties={properties}
+              onSelectProperty={(prop) => setDetailProperty(prop)}
+              onOpenFilter={() => setFilterModalVisible(true)}
+              filters={filters}
+              onClearFilters={() => setFilters(defaultFilters)}
+              favoriteIds={favoriteIds}
+              onToggleFavorite={(propertyId) => setFavoriteIds((current) => current.includes(propertyId) ? current.filter((id) => id !== propertyId) : [...current, propertyId])}
+            />
+          );
         case 'explore':
+          return (
+            <CustomerHome
+              properties={properties}
+              onSelectProperty={(prop) => setDetailProperty(prop)}
+              onOpenFilter={() => setFilterModalVisible(true)}
+              filters={filters}
+              onClearFilters={() => setFilters(defaultFilters)}
+              favoriteIds={favoriteIds}
+              onToggleFavorite={(propertyId) => setFavoriteIds((current) => current.includes(propertyId) ? current.filter((id) => id !== propertyId) : [...current, propertyId])}
+              mode="results"
+            />
+          );
         case 'favorites':
           return (
             <CustomerHome
@@ -99,10 +124,13 @@ export default function App() {
               onOpenFilter={() => setFilterModalVisible(true)}
               filters={filters}
               onClearFilters={() => setFilters(defaultFilters)}
+              favoriteIds={favoriteIds}
+              onToggleFavorite={(propertyId) => setFavoriteIds((current) => current.includes(propertyId) ? current.filter((id) => id !== propertyId) : [...current, propertyId])}
+              mode="saved"
             />
           );
-        case 'resources':
-          return <GovtResourcesScreen />;
+        case 'messages':
+          return <MessagesScreen />;
         case 'profile':
           return (
             <ProfileScreen
@@ -123,6 +151,7 @@ export default function App() {
     } else {
       // Builder View
       switch (activeBuilderTab) {
+        case 'home':
         case 'listings':
           return (
             <BuilderDashboard
@@ -142,19 +171,8 @@ export default function App() {
               onMarkContacted={handleMarkContacted}
             />
           );
-        case 'add':
-          // Also renders dashboard while opening add modal
-          return (
-            <BuilderDashboard
-              properties={properties}
-              inquiries={inquiries}
-              onOpenAddModal={() => setAddPropertyModalVisible(true)}
-              onSelectProperty={(prop) => setDetailProperty(prop)}
-              onDeleteProperty={handleDeleteProperty}
-              onToggleStatus={handleTogglePropertyStatus}
-              builderName={currentUser.companyName || currentUser.name}
-            />
-          );
+        case 'resources':
+          return <GovtResourcesScreen />;
         case 'profile':
           return (
             <ProfileScreen
@@ -180,13 +198,6 @@ export default function App() {
       <SafeAreaView className="flex-1 bg-white" edges={['top', 'left', 'right']}>
         <StatusBar style="dark" />
 
-        {/* Global App Header */}
-        <Header
-          currentUser={currentUser}
-          onOpenAuth={() => setAuthModalVisible(true)}
-          onToggleRole={handleToggleRole}
-        />
-
         {/* Main View Area */}
         <View className="flex-1 bg-slate-50">
           {renderScreenContent()}
@@ -199,11 +210,7 @@ export default function App() {
           activeBuilderTab={activeBuilderTab}
           onSelectCustomerTab={setActiveCustomerTab}
           onSelectBuilderTab={(tab) => {
-            if (tab === 'add') {
-              setAddPropertyModalVisible(true);
-            } else {
-              setActiveBuilderTab(tab);
-            }
+            setActiveBuilderTab(tab);
           }}
           inquiriesCount={inquiries.filter((i) => i.status === 'NEW').length}
         />
@@ -217,6 +224,7 @@ export default function App() {
             setDetailProperty(null);
             setBookingProperty(prop);
           }}
+          onOpenMessages={() => setActiveCustomerTab('messages')}
         />
 
         {/* Rent Booking & Payment Gateway Modal */}
@@ -243,9 +251,9 @@ export default function App() {
           onLoginSuccess={(user) => {
             setCurrentUser(user);
             if (user.role === 'builder') {
-              setActiveBuilderTab('listings');
+              setActiveBuilderTab('home');
             } else {
-              setActiveCustomerTab('explore');
+              setActiveCustomerTab('home');
             }
           }}
         />

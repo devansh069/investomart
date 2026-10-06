@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Modal, ScrollView, Alert, Image } from 'react-native';
-import { Property, PropertyType, FurnishingType } from '../types';
-import { allAmenitiesList, indianCities } from '../mock/data';
+import { Property, PropertyType, FurnishingType } from '../../../types';
+import { allAmenitiesList, indianCities } from '../../../mock/data';
 import { X, Upload, Video, CheckCircle2 } from 'lucide-react-native';
 
 interface AddPropertyModalProps {
@@ -80,7 +80,7 @@ export const AddPropertyModal: React.FC<AddPropertyModalProps> = ({
       amenities: selectedAmenities,
       imageUrl: selectedImage,
       hasVideo,
-      status: 'AVAILABLE',
+      status: 'ACTIVE',
       postedDate: 'Just now',
     };
 
@@ -127,7 +127,7 @@ export const AddPropertyModal: React.FC<AddPropertyModalProps> = ({
                   key={i}
                   onPress={() => setSelectedImage(img)}
                   className={`mr-2 rounded-xl overflow-hidden border-2 ${
-                    selectedImage === img ? 'border-blue-600' : 'border-slate-200'
+                    selectedImage === img ? 'border-slate-950' : 'border-slate-200'
                   }`}
                 >
                   <Image source={{ uri: img }} className="w-16 h-12" resizeMode="cover" />
@@ -144,7 +144,7 @@ export const AddPropertyModal: React.FC<AddPropertyModalProps> = ({
                 <Video size={16} color="#2563eb" />
                 <Text className="text-xs font-semibold text-slate-800 ml-2">Attach Video Tour</Text>
               </View>
-              <Text className={`text-xs font-bold ${hasVideo ? 'text-blue-600' : 'text-slate-400'}`}>
+              <Text className={`text-xs font-bold ${hasVideo ? 'text-slate-950' : 'text-slate-400'}`}>
                 {hasVideo ? 'ENABLED' : 'DISABLED'}
               </Text>
             </TouchableOpacity>
@@ -180,7 +180,7 @@ export const AddPropertyModal: React.FC<AddPropertyModalProps> = ({
                   <TouchableOpacity
                     key={num}
                     onPress={() => setBhk(num)}
-                    className={`px-2 py-1 rounded-lg ${bhk === num ? 'bg-blue-600' : ''}`}
+                    className={`px-2 py-1 rounded-lg ${bhk === num ? 'bg-slate-950' : ''}`}
                   >
                     <Text className={`text-xs font-bold ${bhk === num ? 'text-white' : 'text-slate-600'}`}>
                       {num}
@@ -249,7 +249,7 @@ export const AddPropertyModal: React.FC<AddPropertyModalProps> = ({
                   key={c}
                   onPress={() => setCity(c)}
                   className={`px-3 py-1.5 rounded-xl mr-2 border ${
-                    city === c ? 'bg-blue-600 border-blue-600' : 'bg-slate-50 border-slate-200'
+                    city === c ? 'bg-slate-950 border-slate-950' : 'bg-slate-50 border-slate-200'
                   }`}
                 >
                   <Text className={`text-xs font-semibold ${city === c ? 'text-white' : 'text-slate-700'}`}>
@@ -305,11 +305,11 @@ export const AddPropertyModal: React.FC<AddPropertyModalProps> = ({
                   key={amenity}
                   onPress={() => toggleAmenity(amenity)}
                   className={`flex-row items-center px-3 py-1.5 rounded-full border mr-2 mb-2 ${
-                    selected ? 'bg-blue-50 border-blue-600' : 'bg-slate-50 border-slate-200'
+                    selected ? 'bg-slate-100 border-slate-950' : 'bg-slate-50 border-slate-200'
                   }`}
                 >
                   {selected && <CheckCircle2 size={12} color="#2563eb" className="mr-1" />}
-                  <Text className={`text-xs ${selected ? 'text-blue-700 font-bold' : 'text-slate-600'}`}>
+                  <Text className={`text-xs ${selected ? 'text-slate-950 font-bold' : 'text-slate-600'}`}>
                     {amenity}
                   </Text>
                 </TouchableOpacity>
@@ -321,7 +321,7 @@ export const AddPropertyModal: React.FC<AddPropertyModalProps> = ({
           <TouchableOpacity
             onPress={handleSave}
             activeOpacity={0.85}
-            className="bg-blue-600 py-4 rounded-2xl items-center shadow-md shadow-blue-500/25 mb-8"
+            className="bg-slate-950 py-4 rounded-2xl items-center mb-8"
           >
             <Text className="text-white font-bold text-base">Publish Property Listing</Text>
           </TouchableOpacity>

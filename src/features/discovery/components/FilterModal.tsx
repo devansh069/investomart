@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, Modal, ScrollView } from 'react-native';
-import { FilterState } from '../types';
-import { indianCities, allAmenitiesList } from '../mock/data';
+import { FilterState } from '../../../types';
+import { indianCities, allAmenitiesList } from '../../../mock/data';
 import { X, RotateCcw } from 'lucide-react-native';
 
 interface FilterModalProps {
@@ -101,7 +101,7 @@ export const FilterModal: React.FC<FilterModalProps> = ({
                     key={city}
                     onPress={() => setLocalFilters({ ...localFilters, city })}
                     className={`px-3.5 py-1.5 rounded-xl mr-2 border ${
-                      isActive ? 'bg-blue-600 border-blue-600' : 'bg-slate-50 border-slate-200'
+                      isActive ? 'bg-slate-950 border-slate-950' : 'bg-slate-50 border-slate-200'
                     }`}
                   >
                     <Text className={`text-xs font-semibold ${isActive ? 'text-white' : 'text-slate-700'}`}>
@@ -124,7 +124,7 @@ export const FilterModal: React.FC<FilterModalProps> = ({
                     key={opt.label}
                     onPress={() => setLocalFilters({ ...localFilters, bhk: opt.value })}
                     className={`flex-1 py-2 rounded-xl border items-center mr-1.5 ${
-                      isActive ? 'bg-blue-600 border-blue-600' : 'bg-slate-50 border-slate-200'
+                      isActive ? 'bg-slate-950 border-slate-950' : 'bg-slate-50 border-slate-200'
                     }`}
                   >
                     <Text className={`text-xs font-semibold ${isActive ? 'text-white' : 'text-slate-700'}`}>
@@ -147,7 +147,7 @@ export const FilterModal: React.FC<FilterModalProps> = ({
                     key={opt.label}
                     onPress={() => setLocalFilters({ ...localFilters, maxRent: opt.value })}
                     className={`px-3 py-2 rounded-xl border mr-2 mb-2 ${
-                      isActive ? 'bg-blue-600 border-blue-600' : 'bg-slate-50 border-slate-200'
+                      isActive ? 'bg-slate-950 border-slate-950' : 'bg-slate-50 border-slate-200'
                     }`}
                   >
                     <Text className={`text-xs font-semibold ${isActive ? 'text-white' : 'text-slate-700'}`}>
@@ -170,7 +170,7 @@ export const FilterModal: React.FC<FilterModalProps> = ({
                     key={type}
                     onPress={() => setLocalFilters({ ...localFilters, propertyType: type })}
                     className={`px-3 py-1.5 rounded-xl border mr-2 mb-2 ${
-                      isActive ? 'bg-blue-600 border-blue-600' : 'bg-slate-50 border-slate-200'
+                      isActive ? 'bg-slate-950 border-slate-950' : 'bg-slate-50 border-slate-200'
                     }`}
                   >
                     <Text className={`text-xs font-semibold ${isActive ? 'text-white' : 'text-slate-700'}`}>
@@ -193,7 +193,7 @@ export const FilterModal: React.FC<FilterModalProps> = ({
                     key={f}
                     onPress={() => setLocalFilters({ ...localFilters, furnishing: f })}
                     className={`px-3 py-1.5 rounded-xl border mr-2 mb-2 ${
-                      isActive ? 'bg-blue-600 border-blue-600' : 'bg-slate-50 border-slate-200'
+                      isActive ? 'bg-slate-950 border-slate-950' : 'bg-slate-50 border-slate-200'
                     }`}
                   >
                     <Text className={`text-xs font-semibold ${isActive ? 'text-white' : 'text-slate-700'}`}>
@@ -235,7 +235,7 @@ export const FilterModal: React.FC<FilterModalProps> = ({
             <TouchableOpacity
               onPress={handleApply}
               activeOpacity={0.85}
-              className="bg-blue-600 py-3.5 rounded-2xl items-center shadow-md shadow-blue-500/25 mb-4"
+              className="bg-slate-950 py-3.5 rounded-2xl items-center mb-4"
             >
               <Text className="text-white font-bold text-sm">Apply Filters</Text>
             </TouchableOpacity>
