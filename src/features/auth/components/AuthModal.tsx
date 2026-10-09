@@ -45,7 +45,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose, onLoginS
           <View className="flex-row items-center justify-between pb-3 border-b border-slate-100">
             <View>
               <Text className="text-xl font-black text-slate-900 tracking-tight">
-                {isSignup ? 'Create Your Account' : 'Welcome to InvestoMart'}
+                {isSignup ? 'Create Your Account' : 'Welcome to InvestorMart'}
               </Text>
               <Text className="text-xs text-slate-500 mt-0.5">
                 Real Estate Listing & Rental Platform

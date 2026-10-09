@@ -61,7 +61,7 @@ export const BuilderProfileModal: React.FC<BuilderProfileModalProps> = ({
           <TouchableOpacity
             onPress={() =>
               Share.share({
-                message: `Check out ${builderProfile.name || 'Nexa Homes'} on InvestoMart! Verified Developer.`,
+                message: `Check out ${builderProfile.name || 'Nexa Homes'} on InvestorMart! Verified Developer.`,
               })
             }
             activeOpacity={0.7}

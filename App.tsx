@@ -19,6 +19,9 @@ import { InquiriesScreen } from './src/features/broker/components/InquiriesScree
 import { GovtResourcesScreen } from './src/features/resources/components/GovtResourcesScreen';
 import { ProfileScreen } from './src/features/profile/components/ProfileScreen';
 import { MessagesScreen } from './src/features/messaging/components/MessagesScreen';
+import { LandingScreen } from './src/features/onboarding/components/LandingScreen';
+import { OtpLoginScreen } from './src/features/auth/components/OtpLoginScreen';
+import { RoleSelectionScreen } from './src/features/auth/components/RoleSelectionScreen';
 
 const defaultFilters: FilterState = {
   searchQuery: '',
@@ -35,6 +38,9 @@ const defaultFilters: FilterState = {
 };
 
 export default function App() {
+  // Onboarding stages: 'landing' -> 'otp' -> 'role_select' -> 'authenticated'
+  const [onboardingStage, setOnboardingStage] = useState<'landing' | 'otp' | 'role_select' | 'authenticated'>('landing');
+
   // App state
   const [currentUser, setCurrentUser] = useState<User>(mockUsers.customer);
   const [properties, setProperties] = useState<Property[]>(initialProperties);
@@ -210,6 +216,63 @@ export default function App() {
       }
     }
   };
+
+  if (onboardingStage === 'landing') {
+    return (
+      <SafeAreaProvider>
+        <LandingScreen
+          onGetStarted={() => {
+            setOnboardingStage('otp');
+          }}
+        />
+      </SafeAreaProvider>
+    );
+  }
+
+  if (onboardingStage === 'otp') {
+    return (
+      <SafeAreaProvider>
+        <OtpLoginScreen
+          onLoginSuccess={(phone) => {
+            setCurrentUser((prev) => ({
+              ...prev,
+              phone,
+            }));
+            setOnboardingStage('authenticated');
+            setActiveCustomerTab('home');
+          }}
+          onOpenRoleSelection={() => {
+            setOnboardingStage('role_select');
+          }}
+          onBack={() => {
+            setOnboardingStage('landing');
+          }}
+        />
+      </SafeAreaProvider>
+    );
+  }
+
+  if (onboardingStage === 'role_select') {
+    return (
+      <SafeAreaProvider>
+        <RoleSelectionScreen
+          onSelectRole={(role) => {
+            if (role === 'builder') {
+              setCurrentUser(mockUsers.builder);
+              setActiveBuilderTab('home');
+            } else {
+              setCurrentUser(mockUsers.customer);
+              setActiveCustomerTab('home');
+            }
+            setOnboardingStage('authenticated');
+          }}
+          onBack={() => {
+            setOnboardingStage('otp');
+          }}
+        />
+      </SafeAreaProvider>
+    );
+  }
 
   return (
     <SafeAreaProvider>

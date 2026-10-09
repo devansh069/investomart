@@ -268,7 +268,7 @@ export const BuilderProfileView: React.FC<BuilderProfileViewProps> = ({
             <TouchableOpacity
               onPress={() =>
                 Share.share({
-                  message: `Check out ${profile.name} on InvestoMart! Verified Developer.`,
+                  message: `Check out ${profile.name} on InvestorMart! Verified Developer.`,
                 })
               }
               activeOpacity={0.8}
