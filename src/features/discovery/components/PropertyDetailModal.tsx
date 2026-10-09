@@ -148,7 +148,7 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
                 Share.share({
                   message: `Check out ${property.title} in ${property.city} for ₹${property.rent.toLocaleString(
                     'en-IN'
-                  )}/month on InvestoMart.`,
+                  )}/month on InvestorMart.`,
                 })
               }
               activeOpacity={0.7}

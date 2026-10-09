@@ -22,7 +22,7 @@ export const Header: React.FC<HeaderProps> = ({ currentUser, onOpenAuth, onToggl
         <View className="ml-2.5">
           <View className="flex-row items-center">
             <Text className="text-base font-black text-slate-900 tracking-tight">
-              Investo<Text className="text-blue-600">Mart</Text>
+              Investor<Text className="text-blue-600">Mart</Text>
             </Text>
           </View>
           <Text className="text-[10px] font-medium text-slate-400 -mt-0.5">Real Estate & Rentals</Text>
