@@ -22,7 +22,7 @@ export interface Property {
   builderPhone: string;
   builderVerified: boolean;
   type: PropertyType;
-  bhk: number; // 1, 2, 3, 4
+  bhk: number;
   rent: number; // Monthly rent in ₹
   deposit: number; // Security deposit in ₹
   areaSqft: number;
