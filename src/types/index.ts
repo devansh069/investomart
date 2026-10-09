@@ -22,7 +22,7 @@ export interface Property {
   builderPhone: string;
   builderVerified: boolean;
   type: PropertyType;
-  bhk: number; // 1, 2, 3, 4
+  bhk: number;
   rent: number; // Monthly rent in ₹
   deposit: number; // Security deposit in ₹
   areaSqft: number;
@@ -65,10 +65,33 @@ export interface GovtResource {
 }
 
 export interface FilterState {
+  searchQuery?: string;
   city: string;
   propertyType: string;
   bhk: number | null;
+  bathrooms?: number | null;
+  minRent?: number | null;
   maxRent: number | null;
+  minArea?: number | null;
+  maxArea?: number | null;
   furnishing: string;
   selectedAmenities: string[];
+}
+
+export interface BuilderProfile {
+  id: string;
+  name: string;
+  tagline: string;
+  logoUrl?: string;
+  coverUrl?: string;
+  verified: boolean;
+  projectsCount: string;
+  citiesCount: string;
+  customersCount: string;
+  rating: number;
+  aboutText: string;
+  phone: string;
+  email: string;
+  whatsapp?: string;
+  websiteUrl?: string;
 }

@@ -21,10 +21,15 @@ import { ProfileScreen } from './src/features/profile/components/ProfileScreen';
 import { MessagesScreen } from './src/features/messaging/components/MessagesScreen';
 
 const defaultFilters: FilterState = {
+  searchQuery: '',
   city: 'All Cities',
   propertyType: 'All',
   bhk: null,
-  maxRent: null,
+  bathrooms: null,
+  minRent: 5000,
+  maxRent: 200000,
+  minArea: 500,
+  maxArea: 5000,
   furnishing: 'All',
   selectedAmenities: [],
 };
@@ -98,6 +103,7 @@ export default function App() {
               onSelectProperty={(prop) => setDetailProperty(prop)}
               onOpenFilter={() => setFilterModalVisible(true)}
               filters={filters}
+              onUpdateFilters={setFilters}
               onClearFilters={() => setFilters(defaultFilters)}
               favoriteIds={favoriteIds}
               onToggleFavorite={(propertyId) => setFavoriteIds((current) => current.includes(propertyId) ? current.filter((id) => id !== propertyId) : [...current, propertyId])}
@@ -110,9 +116,11 @@ export default function App() {
               onSelectProperty={(prop) => setDetailProperty(prop)}
               onOpenFilter={() => setFilterModalVisible(true)}
               filters={filters}
+              onUpdateFilters={setFilters}
               onClearFilters={() => setFilters(defaultFilters)}
               favoriteIds={favoriteIds}
               onToggleFavorite={(propertyId) => setFavoriteIds((current) => current.includes(propertyId) ? current.filter((id) => id !== propertyId) : [...current, propertyId])}
+              onGoBack={() => setActiveCustomerTab('home')}
               mode="results"
             />
           );
@@ -123,9 +131,11 @@ export default function App() {
               onSelectProperty={(prop) => setDetailProperty(prop)}
               onOpenFilter={() => setFilterModalVisible(true)}
               filters={filters}
+              onUpdateFilters={setFilters}
               onClearFilters={() => setFilters(defaultFilters)}
               favoriteIds={favoriteIds}
               onToggleFavorite={(propertyId) => setFavoriteIds((current) => current.includes(propertyId) ? current.filter((id) => id !== propertyId) : [...current, propertyId])}
+              onGoBack={() => setActiveCustomerTab('home')}
               mode="saved"
             />
           );
@@ -225,6 +235,15 @@ export default function App() {
             setBookingProperty(prop);
           }}
           onOpenMessages={() => setActiveCustomerTab('messages')}
+          isFavorite={detailProperty ? favoriteIds.includes(detailProperty.id) : false}
+          onToggleFavorite={(propertyId) =>
+            setFavoriteIds((current) =>
+              current.includes(propertyId)
+                ? current.filter((id) => id !== propertyId)
+                : [...current, propertyId]
+            )
+          }
+          allProperties={properties}
         />
 
         {/* Rent Booking & Payment Gateway Modal */}
@@ -242,6 +261,7 @@ export default function App() {
           filters={filters}
           onApplyFilters={setFilters}
           onResetFilters={() => setFilters(defaultFilters)}
+          allProperties={properties}
         />
 
         {/* Login & Signup Modal */}
