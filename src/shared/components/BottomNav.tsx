@@ -1,10 +1,10 @@
 import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { UserRole } from '../../types';
-import { Compass, Landmark, User, Building, MessageSquare, Heart, Home } from 'lucide-react-native';
+import { Compass, User, Building, MessageSquare, Heart, Home, Plus } from 'lucide-react-native';
 
 export type CustomerTabKey = 'home' | 'explore' | 'favorites' | 'messages' | 'profile';
-export type BuilderTabKey = 'home' | 'listings' | 'inquiries' | 'resources' | 'profile';
+export type BuilderTabKey = 'home' | 'listings' | 'add' | 'inquiries' | 'profile';
 
 interface BottomNavProps {
   role: UserRole;
@@ -36,8 +36,8 @@ export const BottomNav: React.FC<BottomNavProps> = ({
   const builderTabs = [
     { key: 'home' as BuilderTabKey, label: 'Home', icon: Home },
     { key: 'listings' as BuilderTabKey, label: 'Properties', icon: Building },
+    { key: 'add' as BuilderTabKey, label: 'Add', icon: Plus, isCenterButton: true },
     { key: 'inquiries' as BuilderTabKey, label: 'Inquiries', icon: MessageSquare, badge: inquiriesCount },
-    { key: 'resources' as BuilderTabKey, label: 'Resources', icon: Landmark },
     { key: 'profile' as BuilderTabKey, label: 'Profile', icon: User },
   ];
 
@@ -70,6 +70,25 @@ export const BottomNav: React.FC<BottomNavProps> = ({
         : builderTabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeBuilderTab === tab.key;
+
+            if (tab.isCenterButton) {
+              return (
+                <TouchableOpacity
+                  key={tab.key}
+                  activeOpacity={0.85}
+                  onPress={() => onSelectBuilderTab(tab.key)}
+                  className="items-center px-2 -mt-5 relative"
+                >
+                  <View className="w-12 h-12 rounded-full bg-slate-950 items-center justify-center shadow-lg border-2 border-white active:scale-95">
+                    <Plus size={22} color="#ffffff" strokeWidth={2.5} />
+                  </View>
+                  <Text className="text-[10px] font-bold text-slate-900 mt-0.5">
+                    {tab.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            }
+
             return (
               <TouchableOpacity
                 key={tab.key}

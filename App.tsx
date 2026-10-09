@@ -181,8 +181,6 @@ export default function App() {
               onMarkContacted={handleMarkContacted}
             />
           );
-        case 'resources':
-          return <GovtResourcesScreen />;
         case 'profile':
           return (
             <ProfileScreen
@@ -195,6 +193,16 @@ export default function App() {
               }}
               propertiesCount={properties.length}
               inquiriesCount={inquiries.length}
+              properties={properties}
+              onSelectProperty={(prop) => setDetailProperty(prop)}
+              favoriteIds={favoriteIds}
+              onToggleFavorite={(propertyId) =>
+                setFavoriteIds((current) =>
+                  current.includes(propertyId)
+                    ? current.filter((id) => id !== propertyId)
+                    : [...current, propertyId]
+                )
+              }
             />
           );
         default:
@@ -213,14 +221,17 @@ export default function App() {
           {renderScreenContent()}
         </View>
 
-        {/* Bottom Navigation */}
         <BottomNav
           role={currentUser.role}
           activeCustomerTab={activeCustomerTab}
           activeBuilderTab={activeBuilderTab}
           onSelectCustomerTab={setActiveCustomerTab}
           onSelectBuilderTab={(tab) => {
-            setActiveBuilderTab(tab);
+            if (tab === 'add') {
+              setAddPropertyModalVisible(true);
+            } else {
+              setActiveBuilderTab(tab);
+            }
           }}
           inquiriesCount={inquiries.filter((i) => i.status === 'NEW').length}
         />
