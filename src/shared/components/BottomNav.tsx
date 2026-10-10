@@ -29,7 +29,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
     { key: 'home' as CustomerTabKey, label: 'Home', icon: Home },
     { key: 'explore' as CustomerTabKey, label: 'Explore', icon: Compass },
     { key: 'favorites' as CustomerTabKey, label: 'Saved', icon: Heart },
-    { key: 'messages' as CustomerTabKey, label: 'Messages', icon: MessageSquare },
+    { key: 'messages' as CustomerTabKey, label: 'Inbox', icon: MessageSquare },
     { key: 'profile' as CustomerTabKey, label: 'Profile', icon: User },
   ];
 

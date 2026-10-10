@@ -46,6 +46,8 @@ export interface Property {
   inquiriesCount?: number;
 }
 
+export type InquiryStatus = 'NEW' | 'SITE_VISIT' | 'CONTACTED' | 'INTERESTED' | 'ACCEPTED';
+
 export interface Inquiry {
   id: string;
   propertyId: string;
@@ -55,9 +57,13 @@ export interface Inquiry {
   customerPhone: string;
   customerEmail: string;
   message: string;
-  moveInDate: string;
+  moveInDate?: string;
   createdAt: string;
-  status: 'NEW' | 'CONTACTED' | 'ACCEPTED';
+  status: InquiryStatus;
+  timeAgo?: string;
+  customerAvatar?: string;
+  propertyImage?: string;
+  propertyLocation?: string;
 }
 
 export interface GovtResource {

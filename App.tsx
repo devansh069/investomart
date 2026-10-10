@@ -58,9 +58,9 @@ export default function App() {
   const [detailProperty, setDetailProperty] = useState<Property | null>(null);
   const [bookingProperty, setBookingProperty] = useState<Property | null>(null);
 
-  // Search & Filters state
   const [filters, setFilters] = useState<FilterState>(defaultFilters);
   const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
+  const [builderActiveChatInquiry, setBuilderActiveChatInquiry] = useState<Inquiry | null>(null);
 
   // Handlers
   const handleToggleRole = () => {
@@ -147,7 +147,13 @@ export default function App() {
             />
           );
         case 'messages':
-          return <MessagesScreen />;
+          return (
+            <MessagesScreen
+              userRole={currentUser.role}
+              properties={properties}
+              onSelectProperty={(prop) => setDetailProperty(prop)}
+            />
+          );
         case 'profile':
           return (
             <ProfileScreen
@@ -192,10 +198,24 @@ export default function App() {
             />
           );
         case 'inquiries':
+          if (builderActiveChatInquiry) {
+            return (
+              <MessagesScreen
+                userRole="builder"
+                initialInquiry={builderActiveChatInquiry}
+                properties={properties}
+                onSelectProperty={(prop) => setDetailProperty(prop)}
+                onExitChat={() => setBuilderActiveChatInquiry(null)}
+              />
+            );
+          }
           return (
             <InquiriesScreen
               inquiries={inquiries}
+              properties={properties}
+              onSelectProperty={(prop) => setDetailProperty(prop)}
               onMarkContacted={handleMarkContacted}
+              onOpenChat={(inq) => setBuilderActiveChatInquiry(inq)}
             />
           );
         case 'profile':
@@ -301,6 +321,7 @@ export default function App() {
           activeBuilderTab={activeBuilderTab}
           onSelectCustomerTab={setActiveCustomerTab}
           onSelectBuilderTab={(tab) => {
+            setBuilderActiveChatInquiry(null);
             if (tab === 'add') {
               setAddPropertyModalVisible(true);
             } else {
