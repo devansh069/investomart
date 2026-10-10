@@ -10,9 +10,10 @@ export interface User {
   companyName?: string;
 }
 
-export type PropertyType = 'Apartment' | 'Villa' | 'Independent House' | 'Studio Apartment' | 'Penthouse';
+export type PropertyType = 'Apartment' | 'Villa' | 'Independent House' | 'Studio Apartment' | 'Penthouse' | 'Commercial' | 'Plot/Land';
+export type ListingType = 'Rent' | 'Sale';
 export type FurnishingType = 'Fully Furnished' | 'Semi-Furnished' | 'Unfurnished';
-export type PropertyStatus = 'ACTIVE' | 'PAUSED' | 'RENTED' | 'EXPIRED' | 'SUBSCRIPTION_PAUSED';
+export type PropertyStatus = 'ACTIVE' | 'PAUSED' | 'RENTED' | 'EXPIRED' | 'SUBSCRIPTION_PAUSED' | 'PENDING' | 'DRAFT';
 
 export interface Property {
   id: string;
@@ -22,8 +23,11 @@ export interface Property {
   builderPhone: string;
   builderVerified: boolean;
   type: PropertyType;
+  listingType?: ListingType;
   bhk: number;
-  rent: number; // Monthly rent in ₹
+  bathrooms?: number;
+  rent: number; // Monthly rent or sale price in ₹
+  priceDisplay?: string;
   deposit: number; // Security deposit in ₹
   areaSqft: number;
   furnishing: FurnishingType;
@@ -37,6 +41,9 @@ export interface Property {
   hasVideo: boolean;
   status: PropertyStatus;
   postedDate: string;
+  viewsCount?: number;
+  likesCount?: number;
+  inquiriesCount?: number;
 }
 
 export interface Inquiry {

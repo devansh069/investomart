@@ -42,7 +42,10 @@ export const BottomNav: React.FC<BottomNavProps> = ({
   ];
 
   return (
-    <View className="flex-row justify-around items-center py-2.5 px-2 bg-white border-t border-slate-100 shadow-lg">
+    <View
+      className="flex-row justify-around items-center py-2.5 px-2 bg-white border-t border-slate-100 shadow-lg relative"
+      style={{ overflow: 'visible' }}
+    >
       {isCustomer
         ? customerTabs.map((tab) => {
             const Icon = tab.icon;
@@ -77,7 +80,9 @@ export const BottomNav: React.FC<BottomNavProps> = ({
                   key={tab.key}
                   activeOpacity={0.85}
                   onPress={() => onSelectBuilderTab(tab.key)}
-                  className="items-center px-2 -mt-5 relative"
+                  hitSlop={{ top: 25, bottom: 20, left: 20, right: 20 }}
+                  className="items-center px-2 relative"
+                  style={{ top: -16, zIndex: 999 }}
                 >
                   <View className="w-12 h-12 rounded-full bg-slate-950 items-center justify-center shadow-lg border-2 border-white active:scale-95">
                     <Plus size={22} color="#ffffff" strokeWidth={2.5} />

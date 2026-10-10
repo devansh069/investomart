@@ -15,6 +15,7 @@ import { FilterModal } from './src/features/discovery/components/FilterModal';
 import { AuthModal } from './src/features/auth/components/AuthModal';
 import { AddPropertyModal } from './src/features/broker/components/AddPropertyModal';
 import { BuilderDashboard } from './src/features/broker/components/BuilderDashboard';
+import { BuilderPropertiesScreen } from './src/features/broker/components/BuilderPropertiesScreen';
 import { InquiriesScreen } from './src/features/broker/components/InquiriesScreen';
 import { GovtResourcesScreen } from './src/features/resources/components/GovtResourcesScreen';
 import { ProfileScreen } from './src/features/profile/components/ProfileScreen';
@@ -168,7 +169,6 @@ export default function App() {
       // Builder View
       switch (activeBuilderTab) {
         case 'home':
-        case 'listings':
           return (
             <BuilderDashboard
               properties={properties}
@@ -178,6 +178,17 @@ export default function App() {
               onDeleteProperty={handleDeleteProperty}
               onToggleStatus={handleTogglePropertyStatus}
               builderName={currentUser.companyName || currentUser.name}
+            />
+          );
+        case 'listings':
+          return (
+            <BuilderPropertiesScreen
+              properties={properties}
+              onOpenAddModal={() => setAddPropertyModalVisible(true)}
+              onSelectProperty={(prop) => setDetailProperty(prop)}
+              onDeleteProperty={handleDeleteProperty}
+              onToggleStatus={handleTogglePropertyStatus}
+              onBack={() => setActiveBuilderTab('home')}
             />
           );
         case 'inquiries':
