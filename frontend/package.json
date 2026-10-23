@@ -1,5 +1,5 @@
 {
-  "name": "investomart",
+  "name": "@investormart/mobile",
   "version": "1.0.0",
   "main": "index.ts",
   "dependencies": {
@@ -25,9 +25,11 @@
   },
   "scripts": {
     "start": "expo start",
+    "start:clear": "expo start --clear",
     "android": "expo start --android",
     "ios": "expo start --ios",
-    "web": "expo start --web"
+    "web": "expo start --web",
+    "typecheck": "tsc --noEmit"
   },
   "private": true
 }

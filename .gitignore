@@ -33,6 +33,9 @@ yarn-error.*
 # local env files
 .env*.local
 
+# Local database exports may include real user and property data.
+*.sql
+
 # typescript
 *.tsbuildinfo
 
