@@ -13,10 +13,13 @@ export interface User {
 export type PropertyType = 'Apartment' | 'Villa' | 'Independent House' | 'Studio Apartment' | 'Penthouse' | 'Commercial' | 'Plot/Land';
 export type ListingType = 'Rent' | 'Sale';
 export type FurnishingType = 'Fully Furnished' | 'Semi-Furnished' | 'Unfurnished';
-export type PropertyStatus = 'ACTIVE' | 'PAUSED' | 'RENTED' | 'EXPIRED' | 'SUBSCRIPTION_PAUSED' | 'PENDING' | 'DRAFT';
+export type PropertyStatus = 'ACTIVE' | 'PAUSED' | 'RENTED' | 'EXPIRED' | 'PLAN_HOLD' | 'PENDING' | 'DRAFT' | 'REJECTED' | 'ARCHIVED';
 
 export interface Property {
   id: string;
+  source?: 'native' | 'legacy_property';
+  sourceId?: string;
+  readOnly?: boolean;
   title: string;
   builderId: string;
   builderName: string;

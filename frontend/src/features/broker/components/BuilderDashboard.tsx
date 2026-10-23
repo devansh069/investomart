@@ -11,6 +11,7 @@ interface BuilderDashboardProps {
   onDeleteProperty: (id: string) => void;
   onToggleStatus: (id: string) => void;
   builderName: string;
+  listingCapacity?: number;
 }
 
 export const BuilderDashboard: React.FC<BuilderDashboardProps> = ({
@@ -21,13 +22,13 @@ export const BuilderDashboard: React.FC<BuilderDashboardProps> = ({
   onDeleteProperty,
   onToggleStatus,
   builderName,
+  listingCapacity = 10,
 }) => {
   const totalListings = properties.length;
   const activeListings = properties.filter((p) => p.status === 'ACTIVE').length;
-  const pausedListings = properties.filter((p) => p.status === 'PAUSED' || p.status === 'EXPIRED' || p.status === 'SUBSCRIPTION_PAUSED').length;
+  const pausedListings = properties.filter((p) => p.status === 'PAUSED' || p.status === 'EXPIRED' || p.status === 'PLAN_HOLD').length;
   const totalInquiries = inquiries.length;
-  const freeListingLimit = 10;
-  const remainingFreeSlots = Math.max(0, freeListingLimit - activeListings);
+  const remainingFreeSlots = Math.max(0, listingCapacity - activeListings);
 
   return (
     <ScrollView className="flex-1 bg-slate-50 px-5 pt-3" showsVerticalScrollIndicator={false}>
@@ -75,11 +76,11 @@ export const BuilderDashboard: React.FC<BuilderDashboardProps> = ({
         <View className="absolute -right-5 -top-5 w-24 h-24 rounded-full bg-amber-400/20" />
         <View className="flex-row items-center justify-between">
           <View className="flex-1 mr-3">
-            <View className="flex-row items-center"><Crown size={15} color="#fbbf24" /><Text className="ml-1.5 text-xs font-bold text-amber-300">FREE LISTING PLAN</Text></View>
-            <Text className="text-white text-lg font-black mt-1">{activeListings} / {freeListingLimit} active listings</Text>
-            <Text className="text-slate-300 text-xs mt-1">{remainingFreeSlots} slots left. Upgrade to Pro for 20 more at ₹500/month.</Text>
+            <View className="flex-row items-center"><Crown size={15} color="#fbbf24" /><Text className="ml-1.5 text-xs font-bold text-amber-300">LISTING CAPACITY</Text></View>
+            <Text className="text-white text-lg font-black mt-1">{activeListings} / {listingCapacity} active listings</Text>
+            <Text className="text-slate-300 text-xs mt-1">{remainingFreeSlots} slots left. Approved listings beyond capacity stay on hold until a plan is active.</Text>
           </View>
-          <View className="bg-white/10 rounded-2xl px-3 py-2"><Text className="text-white text-xs font-bold">Pro</Text><Text className="text-amber-300 text-[10px] font-semibold">+20 slots</Text></View>
+          <View className="bg-white/10 rounded-2xl px-3 py-2"><Text className="text-white text-xs font-bold">Plan</Text><Text className="text-amber-300 text-[10px] font-semibold">Add slots</Text></View>
         </View>
         {pausedListings > 0 && <Text className="mt-3 text-[11px] font-semibold text-amber-200">{pausedListings} listing{pausedListings === 1 ? '' : 's'} paused or expired - continue them when capacity is available.</Text>}
       </View>

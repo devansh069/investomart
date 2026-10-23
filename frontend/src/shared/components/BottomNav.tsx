@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity } from 'react-native';
 import { UserRole } from '../../types';
 import { Compass, User, Building, MessageSquare, Heart, Home, Plus } from 'lucide-react-native';
 
-export type CustomerTabKey = 'home' | 'explore' | 'favorites' | 'messages' | 'profile';
+export type CustomerTabKey = 'home' | 'explore' | 'favorites' | 'profile';
 export type BuilderTabKey = 'home' | 'listings' | 'add' | 'inquiries' | 'profile';
 
 interface BottomNavProps {
@@ -29,7 +29,6 @@ export const BottomNav: React.FC<BottomNavProps> = ({
     { key: 'home' as CustomerTabKey, label: 'Home', icon: Home },
     { key: 'explore' as CustomerTabKey, label: 'Explore', icon: Compass },
     { key: 'favorites' as CustomerTabKey, label: 'Saved', icon: Heart },
-    { key: 'messages' as CustomerTabKey, label: 'Inbox', icon: MessageSquare },
     { key: 'profile' as CustomerTabKey, label: 'Profile', icon: User },
   ];
 

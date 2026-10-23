@@ -34,8 +34,8 @@ composer quality
 - Base path: `/api/v1`
 - JSON request and response bodies
 - Sanctum bearer tokens for authenticated mobile/admin endpoints
-- Thin controllers, Form Request validation, API Resources, and business services
+- Controllers, request validation, and business services separated by feature
 - External providers accessed through contracts so OTP, storage, and payment vendors can be changed without controller rewrites
-- All new database objects use an `app_` prefix to reduce collision risk with the legacy schema
+- All new InvestorMart domain tables use an `im_` prefix; Sanctum uses `app_personal_access_tokens`
 
-See [ARCHITECTURE.md](docs/ARCHITECTURE.md) for module boundaries and deployment assumptions.
+See [ARCHITECTURE.md](docs/ARCHITECTURE.md) for module boundaries and [DEPLOYMENT.md](docs/DEPLOYMENT.md) for the AWS handoff.

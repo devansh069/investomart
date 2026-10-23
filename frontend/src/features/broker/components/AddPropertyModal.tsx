@@ -32,7 +32,7 @@ import { allAmenitiesList } from '../../../mock/data';
 interface AddPropertyModalProps {
   visible: boolean;
   onClose: () => void;
-  onAddProperty: (property: Property) => void;
+  onAddProperty: (property: Property) => Promise<void> | void;
   builderName: string;
   builderPhone: string;
 }
@@ -101,7 +101,7 @@ export const AddPropertyModal: React.FC<AddPropertyModalProps> = ({
     return match ? parseInt(match[0], 10) : 2;
   };
 
-  const handlePublish = () => {
+  const handlePublish = async () => {
     const propTitle = title.trim() || 'Modern Luxury Residence';
     const propLocation = location.trim() || 'Sector 62, Noida';
     const rentValue = parseInt(price.replace(/[^0-9]/g, ''), 10) || 32000;
@@ -140,9 +140,13 @@ export const AddPropertyModal: React.FC<AddPropertyModalProps> = ({
       inquiriesCount: 0,
     };
 
-    onAddProperty(newProperty);
-    Alert.alert('Property Published!', 'Your listing is now live and visible to all users.');
-    handleResetAndClose();
+    try {
+      await onAddProperty(newProperty);
+      Alert.alert('Property Submitted', 'Your listing is pending admin approval before it becomes visible to clients.');
+      handleResetAndClose();
+    } catch (error) {
+      Alert.alert('Unable to submit property', error instanceof Error ? error.message : 'Please try again.');
+    }
   };
 
   const handleResetAndClose = () => {

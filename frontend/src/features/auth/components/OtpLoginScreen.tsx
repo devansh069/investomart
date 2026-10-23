@@ -23,19 +23,22 @@ import {
   ArrowLeft,
   CheckCircle2,
 } from 'lucide-react-native';
+import { ApiError } from '../../../core/api/client';
+import { requestOtp, verifyOtp } from '../../../core/api/investormart';
+import type { StoredSession } from '../../../core/auth/session';
 
 const villaBg = require('../../../../assets/landing-villa.jpg');
 
 interface OtpLoginScreenProps {
-  onLoginSuccess: (phone: string) => void;
-  onOpenRoleSelection?: () => void;
+  onLoginSuccess: (session: StoredSession) => void | Promise<void>;
   onBack?: () => void;
+  onSkip?: () => void;
 }
 
 export const OtpLoginScreen: React.FC<OtpLoginScreenProps> = ({
   onLoginSuccess,
-  onOpenRoleSelection,
   onBack,
+  onSkip,
 }) => {
   const insets = useSafeAreaInsets();
   const topInset = Math.max(insets.top, Platform.OS === 'android' ? (StatusBar.currentHeight || 24) : 44);
@@ -44,18 +47,41 @@ export const OtpLoginScreen: React.FC<OtpLoginScreenProps> = ({
   const [phoneNumber, setPhoneNumber] = useState('');
   const [isOtpSent, setIsOtpSent] = useState(false);
   const [isSignUpMode, setIsSignUpMode] = useState(false);
-  const [otpCode, setOtpCode] = useState(['', '', '', '']);
+  const [otpCode, setOtpCode] = useState(['', '', '', '', '', '']);
+  const [challengeId, setChallengeId] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSendOtp = () => {
+  const handleSendOtp = async () => {
     if (phoneNumber.trim().length < 10) {
       Alert.alert('Phone Number Required', 'Please enter a valid 10-digit mobile number.');
       return;
     }
-    setIsOtpSent(true);
+    try {
+      setIsSubmitting(true);
+      const challenge = await requestOtp(phoneNumber);
+      setChallengeId(challenge.challenge_id);
+      setIsOtpSent(true);
+    } catch (error) {
+      Alert.alert('OTP not sent', error instanceof ApiError ? error.message : 'Please check your connection and try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const handleVerifyOtp = () => {
-    onLoginSuccess(phoneNumber || '+91 98765 43210');
+  const handleVerifyOtp = async () => {
+    if (!challengeId || otpCode.join('').length !== 6) {
+      Alert.alert('OTP Required', 'Enter the complete OTP sent to your mobile number.');
+      return;
+    }
+    try {
+      setIsSubmitting(true);
+      const session = await verifyOtp(challengeId, phoneNumber, otpCode.join(''));
+      await onLoginSuccess(session);
+    } catch (error) {
+      Alert.alert('Verification failed', error instanceof ApiError ? error.message : 'Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -101,18 +127,25 @@ export const OtpLoginScreen: React.FC<OtpLoginScreenProps> = ({
                 </View>
               </View>
 
-              {onBack && (
-                <TouchableOpacity
-                  onPress={() => {
-                    Keyboard.dismiss();
-                    onBack();
-                  }}
-                  activeOpacity={0.7}
-                  className="w-8 h-8 rounded-full bg-white/90 items-center justify-center border border-slate-200/60 shadow-xs"
-                >
-                  <ArrowLeft size={16} color="#0f172a" />
-                </TouchableOpacity>
-              )}
+              <View className="flex-row items-center">
+                {onSkip && !isOtpSent && (
+                  <TouchableOpacity onPress={onSkip} activeOpacity={0.7} className="px-3 py-1.5 rounded-full bg-white/75 border border-white/60 mr-2">
+                    <Text className="text-xs font-bold text-slate-800">Skip</Text>
+                  </TouchableOpacity>
+                )}
+                {onBack && (
+                  <TouchableOpacity
+                    onPress={() => {
+                      Keyboard.dismiss();
+                      onBack();
+                    }}
+                    activeOpacity={0.7}
+                    className="w-8 h-8 rounded-full bg-white/90 items-center justify-center border border-slate-200/60 shadow-xs"
+                  >
+                    <ArrowLeft size={16} color="#0f172a" />
+                  </TouchableOpacity>
+                )}
+              </View>
             </View>
 
             {/* Welcome Heading directly over photo */}
@@ -189,11 +222,12 @@ export const OtpLoginScreen: React.FC<OtpLoginScreenProps> = ({
             {/* Send OTP Primary Button */}
             <TouchableOpacity
               onPress={handleSendOtp}
+              disabled={isSubmitting}
               activeOpacity={0.88}
               className="w-full bg-slate-950 py-3.5 rounded-full flex-row items-center justify-center shadow-md active:opacity-90 mt-3"
             >
               <Text className="text-sm font-bold text-white mr-2">
-                {isSignUpMode ? 'Register & Send OTP' : 'Send OTP'}
+                {isSubmitting ? 'Sending...' : (isSignUpMode ? 'Register & Send OTP' : 'Send OTP')}
               </Text>
               <ArrowRight size={16} color="#ffffff" />
             </TouchableOpacity>
@@ -217,7 +251,7 @@ export const OtpLoginScreen: React.FC<OtpLoginScreenProps> = ({
 
             {/* 4-digit OTP Boxes */}
             <View className="flex-row justify-between my-3">
-              {[0, 1, 2, 3].map((idx) => (
+              {[0, 1, 2, 3, 4, 5].map((idx) => (
                 <TextInput
                   key={idx}
                   value={otpCode[idx]}
@@ -236,10 +270,11 @@ export const OtpLoginScreen: React.FC<OtpLoginScreenProps> = ({
             {/* Verify & Continue Button */}
             <TouchableOpacity
               onPress={handleVerifyOtp}
+              disabled={isSubmitting}
               activeOpacity={0.88}
               className="w-full bg-slate-950 py-3.5 rounded-full flex-row items-center justify-center shadow-md active:opacity-90"
             >
-              <Text className="text-sm font-bold text-white mr-2">Verify & Continue</Text>
+              <Text className="text-sm font-bold text-white mr-2">{isSubmitting ? 'Verifying...' : 'Verify & Continue'}</Text>
               <CheckCircle2 size={16} color="#ffffff" />
             </TouchableOpacity>
           </>
@@ -260,13 +295,7 @@ export const OtpLoginScreen: React.FC<OtpLoginScreenProps> = ({
             {isSignUpMode ? 'Already have an account? ' : "Don't have an account? "}
           </Text>
           <TouchableOpacity
-            onPress={() => {
-              if (!isSignUpMode && onOpenRoleSelection) {
-                onOpenRoleSelection();
-              } else {
-                setIsSignUpMode(!isSignUpMode);
-              }
-            }}
+            onPress={() => setIsSignUpMode(!isSignUpMode)}
             activeOpacity={0.7}
           >
             <Text className="text-sm font-black text-emerald-600 underline ml-0.5">

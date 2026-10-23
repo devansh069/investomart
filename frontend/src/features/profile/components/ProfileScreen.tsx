@@ -24,6 +24,7 @@ interface ProfileScreenProps {
   currentUser: User;
   onToggleRole: () => void;
   onOpenAuth: () => void;
+  onOpenAdmin: () => void;
   onLogout: () => void;
   propertiesCount: number;
   inquiriesCount: number;
@@ -37,6 +38,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   currentUser,
   onToggleRole,
   onOpenAuth,
+  onOpenAdmin,
   onLogout,
   propertiesCount,
   inquiriesCount,
@@ -137,6 +139,15 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
           </TouchableOpacity>
 
           <TouchableOpacity
+            onPress={onOpenAdmin}
+            activeOpacity={0.85}
+            className="w-full border border-slate-300 bg-white py-3.5 rounded-full flex-row items-center justify-center mt-2.5"
+          >
+            <Settings size={16} color="#0f172a" />
+            <Text className="ml-2 text-sm font-bold text-slate-900">Admin Panel</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
             onPress={() =>
               Alert.alert('Sign out', 'Sign out of this demo session?', [
                 { text: 'Cancel', style: 'cancel' },
@@ -199,6 +210,15 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
             >
               <ArrowLeftRight size={16} color="#ffffff" />
               <Text className="ml-2 text-sm font-bold text-white">Switch to Client View</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={onOpenAdmin}
+              activeOpacity={0.85}
+              className="w-full border border-slate-300 bg-white py-3.5 rounded-full flex-row items-center justify-center mt-2.5"
+            >
+              <Settings size={16} color="#0f172a" />
+              <Text className="ml-2 text-sm font-bold text-slate-900">Admin Panel</Text>
             </TouchableOpacity>
 
             <TouchableOpacity

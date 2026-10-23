@@ -29,7 +29,7 @@ return [
     ],
 
     'otp' => [
-        'provider' => env('OTP_PROVIDER', 'log'),
+        'driver' => env('OTP_PROVIDER', 'log'),
         'endpoint' => env('OTP_ENDPOINT'),
         'token' => env('OTP_SERVICE_TOKEN'),
         'sender_id' => env('OTP_SENDER_ID'),

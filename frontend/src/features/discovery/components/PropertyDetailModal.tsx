@@ -41,6 +41,7 @@ interface PropertyDetailModalProps {
   onClose: () => void;
   onApplyRent: (property: Property) => void;
   onOpenMessages: () => void;
+  onRecordContact?: (property: Property, channel: 'call' | 'whatsapp') => Promise<boolean>;
   isFavorite?: boolean;
   onToggleFavorite?: (propertyId: string) => void;
   allProperties?: Property[];
@@ -52,6 +53,7 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
   onClose,
   onApplyRent,
   onOpenMessages,
+  onRecordContact,
   isFavorite = false,
   onToggleFavorite,
   allProperties = [],
@@ -75,13 +77,37 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
   const handleCall = () => {
     Alert.alert('Contact Builder', `Call ${property.builderName} at ${property.builderPhone}?`, [
       { text: 'Cancel', style: 'cancel' },
-      { text: 'Call Now', onPress: () => Linking.openURL(`tel:${property.builderPhone}`) },
+      {
+        text: 'Call Now',
+        onPress: async () => {
+          if (!property.builderPhone) {
+            Alert.alert('Phone unavailable', 'This provider has not shared a phone number.');
+            return;
+          }
+          if (onRecordContact && !await onRecordContact(property, 'call')) return;
+          await Linking.openURL(`tel:${property.builderPhone}`);
+        },
+      },
     ]);
   };
 
   const handleWhatsApp = () => {
-    onClose();
-    onOpenMessages();
+    Alert.alert('WhatsApp Builder', `Send a WhatsApp message to ${property.builderName}?`, [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Open WhatsApp',
+        onPress: async () => {
+          if (!property.builderPhone) {
+            Alert.alert('Phone unavailable', 'This provider has not shared a WhatsApp number.');
+            return;
+          }
+          if (onRecordContact && !await onRecordContact(property, 'whatsapp')) return;
+          const phone = property.builderPhone.replace(/\D/g, '');
+          const message = encodeURIComponent(`Hello ${property.builderName}, I am interested in ${property.title} on InvestorMart.`);
+          await Linking.openURL(`whatsapp://send?phone=${phone}&text=${message}`);
+        },
+      },
+    ]);
   };
 
   const handleVideoTour = () => {

@@ -39,7 +39,7 @@ php artisan test
 php artisan serve
 ```
 
-The local backend defaults to SQLite so its health check and tests run without production credentials. Before connecting to the shared InvestorMart database, configure the MySQL settings and review every additive migration against a fresh copy of the supplied dump.
+The test suite uses SQLite in memory. The checked local backend is connected to the imported MySQL dump through the ignored `backend/.env`; its legacy tables are read-only and migrations add only application-owned tables.
 
 ## API boundary
 
@@ -51,4 +51,4 @@ GET /api/v1/health
 
 Production secrets belong in the backend deployment environment. Only variables prefixed with `EXPO_PUBLIC_` may be exposed to the mobile bundle, and those values must be treated as public.
 
-See [client integration requirements](docs/CLIENT_INTEGRATION_REQUIREMENTS.md) and [backend architecture](backend/docs/ARCHITECTURE.md).
+See [client integration requirements](docs/CLIENT_INTEGRATION_REQUIREMENTS.md), [backend architecture](backend/docs/ARCHITECTURE.md), and the [AWS deployment handoff](backend/docs/DEPLOYMENT.md).

@@ -20,14 +20,14 @@ app/
 └── Services/           Business workflows and integration adapters
 ```
 
-Feature code will be added in these modules:
+Implemented modules:
 
 1. Authentication and OTP
-2. Public projects/properties catalogue
+2. Public property catalogue (legacy `property` records plus new app listings)
 3. Provider profiles and property workflow
 4. Shortlists and inquiries
 5. Listing plans and capacity reconciliation
-6. Razorpay Orders, verification, and webhooks
+6. Razorpay Orders and server-side signature verification
 7. S3 presigned media uploads
 8. Admin review and reporting endpoints
 
@@ -50,4 +50,4 @@ A property is publicly visible only when it is approved, provider-active, and ca
 - A scheduler invokes `php artisan schedule:run` every minute when expiry jobs are introduced.
 - Queue workers are configured when OTP, media, mail, or webhook workloads are moved to queues.
 
-These assumptions must be reconciled with InvestorMart's employee before staging deployment.
+See [DEPLOYMENT.md](DEPLOYMENT.md) for the required environment values and scheduler setup.
