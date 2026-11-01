@@ -1,5 +1,6 @@
 import React from 'react';
 import {
+  Alert,
   View,
   Text,
   Image,
@@ -23,7 +24,7 @@ const userHouseImg = require('../../../../assets/user-role-house.jpg');
 const brokerBuildingImg = require('../../../../assets/broker-role-building.jpg');
 
 interface RoleSelectionScreenProps {
-  onSelectRole: (role: 'customer' | 'builder') => void;
+  onSelectRole: (role: 'client' | 'builder' | 'owner' | 'broker') => void;
   onBack: () => void;
 }
 
@@ -37,7 +38,7 @@ export const RoleSelectionScreen: React.FC<RoleSelectionScreenProps> = ({
 
   return (
     <View className="flex-1 bg-white">
-      <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
+      <StatusBar barStyle="dark-content" />
 
       <ScrollView
         showsVerticalScrollIndicator={false}
@@ -93,7 +94,7 @@ export const RoleSelectionScreen: React.FC<RoleSelectionScreenProps> = ({
         <View className="flex-row space-x-3.5 mb-8">
           {/* USER CARD (LEFT) */}
           <TouchableOpacity
-            onPress={() => onSelectRole('customer')}
+            onPress={() => onSelectRole('client')}
             activeOpacity={0.92}
             className="flex-1 bg-[#edf8f3] border border-emerald-200/60 rounded-[28px] p-3.5 flex-col justify-between shadow-xs"
           >
@@ -131,7 +132,16 @@ export const RoleSelectionScreen: React.FC<RoleSelectionScreenProps> = ({
 
           {/* BROKER CARD (RIGHT) */}
           <TouchableOpacity
-            onPress={() => onSelectRole('builder')}
+            onPress={() => Alert.alert(
+              'Choose provider type',
+              'Builder, owner, and broker use the same workspace. This label is saved with your account.',
+              [
+                { text: 'Builder', onPress: () => onSelectRole('builder') },
+                { text: 'Owner', onPress: () => onSelectRole('owner') },
+                { text: 'Broker', onPress: () => onSelectRole('broker') },
+                { text: 'Cancel', style: 'cancel' },
+              ],
+            )}
             activeOpacity={0.92}
             className="flex-1 bg-[#fdf6ee] border border-amber-200/60 rounded-[28px] p-3.5 flex-col justify-between shadow-xs ml-3.5"
           >
@@ -152,7 +162,7 @@ export const RoleSelectionScreen: React.FC<RoleSelectionScreenProps> = ({
 
               {/* Title & Description */}
               <Text className="text-lg font-black text-slate-900 tracking-tight mb-1">
-                Broker
+                Provider
               </Text>
               <Text className="text-[11px] text-slate-600 leading-snug font-normal">
                 List properties, connect with clients and grow your business.

@@ -4,30 +4,23 @@ namespace App\Http\Controllers\Api\V1\Provider;
 
 use App\Http\Controllers\Api\V1\ApiController;
 use App\Models\Account;
-use App\Models\Listing;
 use App\Services\Listings\CatalogueService;
-use App\Services\Listings\ListingCapacityService;
+use App\Services\Listings\LegacyPropertyService;
 use App\Services\Listings\ListingPresenter;
-use App\Services\Listings\ListingService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
 class ProviderListingController extends ApiController
 {
-    public function dashboard(Request $request, CatalogueService $catalogue, ListingCapacityService $capacity): JsonResponse
+    public function dashboard(Request $request, CatalogueService $catalogue): JsonResponse
     {
         /** @var Account $provider */
         $provider = $request->user();
-        $capacity->rebalance($provider);
         $listings = $catalogue->providerListings($provider);
 
         return $this->success([
-            'listing_capacity' => [
-                'total' => $capacity->capacityFor($provider),
-                'active' => $listings->where('status', 'ACTIVE')->count(),
-                'plan_hold' => $listings->where('status', 'PLAN_HOLD')->count(),
-            ],
+            'listing_capacity' => ['total' => 10, 'active' => $listings->where('status', 'ACTIVE')->count(), 'plan_hold' => 0],
             'listings' => $listings->values(),
             'summary' => [
                 'pending' => $listings->where('status', 'PENDING')->count(),
@@ -37,64 +30,62 @@ class ProviderListingController extends ApiController
         ]);
     }
 
-    public function index(Request $request, CatalogueService $catalogue, ListingCapacityService $capacity): JsonResponse
+    public function index(Request $request, CatalogueService $catalogue): JsonResponse
+    {
+        return $this->success(['listings' => $catalogue->providerListings($request->user())->values()]);
+    }
+
+    public function store(Request $request, LegacyPropertyService $properties, ListingPresenter $presenter): JsonResponse
     {
         /** @var Account $provider */
         $provider = $request->user();
-        $capacity->rebalance($provider);
+        $property = $properties->create($provider, $this->validatedPayload($request));
 
-        return $this->success(['listings' => $catalogue->providerListings($provider)->values()]);
+        return $this->success(['listing' => $presenter->legacy($property, false)], 'Property submitted for admin approval.', 201);
     }
 
-    public function store(Request $request, ListingService $listings, ListingPresenter $presenter): JsonResponse
+    public function update(Request $request, int $id, LegacyPropertyService $properties, ListingPresenter $presenter): JsonResponse
     {
-        /** @var Account $provider */
-        $provider = $request->user();
-        $listing = $listings->create($provider, $this->validatedPayload($request));
+        $property = $properties->update($request->user(), $id, $this->validatedPayload($request));
 
-        return $this->success(['listing' => $presenter->native($listing)], 'Property submitted for admin approval.', 201);
+        return $this->success(['listing' => $presenter->legacy($property, false)], 'Property updated and submitted for approval.');
     }
 
-    public function update(Request $request, string $id, ListingService $listings, ListingPresenter $presenter): JsonResponse
+    public function updateStatus(Request $request, int $id, LegacyPropertyService $properties, ListingPresenter $presenter): JsonResponse
     {
-        $listing = $this->owned($request, $id);
-        $listing = $listings->update($listing, $this->validatedPayload($request));
+        $validated = $request->validate(['status' => ['required', Rule::in(['paused', 'archived', 'restore', 'delete'])]]);
+        $property = $properties->changeProviderStatus($request->user(), $id, $validated['status']);
 
-        return $this->success(['listing' => $presenter->native($listing)], 'Property updated and submitted for approval.');
-    }
-
-    public function updateStatus(Request $request, string $id, ListingService $listings, ListingPresenter $presenter): JsonResponse
-    {
-        $validated = $request->validate(['status' => ['required', Rule::in(['active', 'paused', 'archived'])]]);
-        $listing = $listings->setProviderStatus($this->owned($request, $id), $validated['status']);
-
-        return $this->success(['listing' => $presenter->native($listing)]);
-    }
-
-    private function owned(Request $request, string $id): Listing
-    {
-        $listing = Listing::query()->whereKey($id)->where('provider_account_id', $request->user()->id)->first();
-        abort_if($listing === null, 404, 'Property not found.');
-
-        return $listing;
+        return $this->success(['listing' => $presenter->legacy($property, false)]);
     }
 
     /** @return array<string, mixed> */
     private function validatedPayload(Request $request): array
     {
         return $request->validate([
-            'title' => ['required', 'string', 'min:3', 'max:180'],
-            'property_type' => ['required', 'string', 'max:50'], 'listing_type' => ['required', Rule::in(['Rent', 'Sale', 'rent', 'sale'])],
-            'price' => ['required', 'numeric', 'min:0'], 'price_period' => ['nullable', 'string', 'max:20'],
-            'bedrooms' => ['nullable', 'string', 'max:20'], 'bathrooms' => ['nullable', 'integer', 'min:0', 'max:30'],
+            'title' => ['required', 'string', 'min:3', 'max:100'],
+            'listing_type' => ['required', Rule::in(['rent', 'sale', 'Rent', 'Sale'])],
+            'category_id' => ['required', 'integer', 'exists:property_cat,id'],
+            'city_id' => ['required', 'integer', 'exists:city,id'],
+            'locality_id' => ['required', 'integer', 'exists:localities,lid'],
+            'price' => ['required', 'numeric', 'min:1', 'max:999999999999'],
+            'cover_image' => ['required', 'string', 'max:100', 'regex:/^[A-Za-z0-9._-]+$/'],
+            'contact_phone' => ['required', 'string', 'max:20'],
+            'configuration' => ['nullable', 'string', 'max:30'], 'bedrooms' => ['nullable', 'string', 'max:30'],
+            'bathrooms' => ['nullable', 'string', 'max:20'], 'balconies' => ['nullable', 'string', 'max:20'],
             'area' => ['nullable', 'numeric', 'min:0'], 'area_unit' => ['nullable', 'string', 'max:20'],
-            'furnishing' => ['nullable', 'string', 'max:40'], 'deposit' => ['nullable', 'numeric', 'min:0'],
-            'city' => ['required', 'string', 'max:120'], 'location' => ['required', 'string', 'max:180'], 'address' => ['nullable', 'string', 'max:1000'],
-            'latitude' => ['nullable', 'numeric', 'between:-90,90'], 'longitude' => ['nullable', 'numeric', 'between:-180,180'],
-            'description' => ['nullable', 'string', 'max:10000'], 'amenities' => ['nullable', 'array', 'max:50'], 'amenities.*' => ['string', 'max:80'],
-            'details' => ['nullable', 'array'], 'contact_name' => ['nullable', 'string', 'max:120'], 'contact_phone' => ['nullable', 'string', 'max:20'],
-            'primary_image_url' => ['nullable', 'url', 'max:2048'], 'media' => ['nullable', 'array', 'max:20'],
-            'media.*' => ['nullable'],
+            'furnishing' => ['nullable', 'string', 'max:100'], 'property_age' => ['nullable', 'string', 'max:100'],
+            'possession_status' => ['nullable', 'string', 'max:255'], 'possession_date' => ['nullable', 'date'],
+            'description' => ['nullable', 'string', 'max:10000'], 'gallery_images' => ['nullable', 'array', 'max:20'],
+            'gallery_images.*' => ['string', 'max:255', 'regex:/^[A-Za-z0-9._-]+$/'],
+            'video_link' => ['nullable', 'url', 'max:255'], 'project_id' => ['nullable', 'integer', 'exists:bilder_proj,pid'],
+            'project_name' => ['nullable', 'string', 'max:255'], 'floor_number' => ['nullable', 'string', 'max:255'],
+            'total_floors' => ['nullable', 'string', 'max:255'], 'facing' => ['nullable', 'string', 'max:100'],
+            'reserved_parking' => ['nullable', 'boolean'], 'visitor_parking' => ['nullable', 'boolean'],
+            'amenity_ids' => ['nullable', 'array', 'max:50'], 'amenity_ids.*' => ['integer', 'exists:amenities,id'],
+            'transaction_type' => ['nullable', 'string', 'max:255'], 'price_unit' => ['nullable', 'string', 'max:100'],
+            'price_per_unit' => ['nullable', 'string', 'max:255'], 'sub_type' => ['nullable', 'string', 'max:100'],
+            'plot_area_unit' => ['nullable', 'string', 'max:20'],
         ]);
     }
 }

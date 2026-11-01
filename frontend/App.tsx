@@ -33,7 +33,7 @@ import { InquiriesScreen } from './src/features/broker/components/InquiriesScree
 import { GovtResourcesScreen } from './src/features/resources/components/GovtResourcesScreen';
 import { ProfileScreen } from './src/features/profile/components/ProfileScreen';
 import { LandingScreen } from './src/features/onboarding/components/LandingScreen';
-import { OtpLoginScreen } from './src/features/auth/components/OtpLoginScreen';
+import { OtpLoginScreen, type SignupDetails } from './src/features/auth/components/OtpLoginScreen';
 import { RoleSelectionScreen } from './src/features/auth/components/RoleSelectionScreen';
 import { AdminPanelScreen } from './src/features/admin/components/AdminPanelScreen';
 
@@ -108,8 +108,12 @@ export default function App() {
       if (existingSession) {
         setSession(existingSession);
         setCurrentUser(mapAccount(existingSession.account));
-        setOnboardingStage('authenticated');
-        await loadAuthenticatedData(existingSession);
+        if (existingSession.account.requires_role_selection) {
+          setOnboardingStage('role_select');
+        } else {
+          setOnboardingStage('authenticated');
+          await loadAuthenticatedData(existingSession);
+        }
       } else {
         await loadPublicListings();
       }
@@ -117,21 +121,6 @@ export default function App() {
   }, [loadAuthenticatedData, loadPublicListings]);
 
   // Handlers
-  const handleToggleRole = () => {
-    if (currentUser.role === 'customer') {
-      if (!session || !['builder', 'owner', 'broker'].includes(session.account.role)) {
-        Alert.alert('Provider access required', 'Choose Builder, Owner, or Broker after secure login to manage listings.');
-        return;
-      }
-      setCurrentUser((current) => ({ ...current, role: 'builder' }));
-      setActiveBuilderTab('home');
-    } else {
-      setCurrentUser((current) => ({ ...current, role: 'customer' }));
-      void loadPublicListings();
-      setActiveCustomerTab('home');
-    }
-  };
-
   const handleAddProperty = async (newProperty: Property) => {
     if (!session) throw new Error('Please sign in before adding a property.');
     const listing = await createProviderListing(session.accessToken, {
@@ -279,7 +268,6 @@ export default function App() {
           return (
             <ProfileScreen
               currentUser={currentUser}
-              onToggleRole={handleToggleRole}
               onOpenAuth={() => setOnboardingStage('otp')}
               onOpenAdmin={openAdminPanel}
               onLogout={() => { void handleLogout(); }}
@@ -330,7 +318,6 @@ export default function App() {
           return (
             <ProfileScreen
               currentUser={currentUser}
-              onToggleRole={handleToggleRole}
               onOpenAuth={() => setOnboardingStage('otp')}
               onOpenAdmin={openAdminPanel}
               onLogout={() => { void handleLogout(); }}
@@ -364,15 +351,27 @@ export default function App() {
     return (
       <SafeAreaProvider>
         <OtpLoginScreen
-          onLoginSuccess={async (nextSession) => {
-            await saveSession(nextSession);
-            setSession(nextSession);
-            setCurrentUser(mapAccount(nextSession.account));
-            if (nextSession.account.role === 'client') {
+          onLoginSuccess={async (nextSession, signupDetails?: SignupDetails) => {
+            let resolvedSession = nextSession;
+
+            // The server marks a number as new only after successful OTP
+            // verification. Apply registration data only in that case, so an
+            // existing user cannot accidentally overwrite their saved role.
+            if (signupDetails && nextSession.account.requires_role_selection) {
+              const account = await updateMyProfile(nextSession.accessToken, signupDetails);
+              resolvedSession = { ...nextSession, account };
+            } else if (signupDetails) {
+              Alert.alert('Account already exists', 'You have been signed in with your saved InvestorMart account type.');
+            }
+
+            await saveSession(resolvedSession);
+            setSession(resolvedSession);
+            setCurrentUser(mapAccount(resolvedSession.account));
+            if (resolvedSession.account.requires_role_selection) {
               setOnboardingStage('role_select');
             } else {
               setOnboardingStage('authenticated');
-              await loadAuthenticatedData(nextSession);
+              await loadAuthenticatedData(resolvedSession);
             }
             setActiveCustomerTab('home');
           }}
@@ -397,14 +396,18 @@ export default function App() {
         <RoleSelectionScreen
           onSelectRole={async (role) => {
             if (!session) return;
-            const account = await updateMyProfile(session.accessToken, { role: role === 'builder' ? 'builder' : 'client' });
-            const nextSession = { ...session, account };
-            await saveSession(nextSession);
-            setSession(nextSession);
-            setCurrentUser(mapAccount(account));
-            if (role === 'builder') setActiveBuilderTab('home'); else setActiveCustomerTab('home');
-            setOnboardingStage('authenticated');
-            await loadAuthenticatedData(nextSession);
+            try {
+              const account = await updateMyProfile(session.accessToken, { role });
+              const nextSession = { ...session, account };
+              await saveSession(nextSession);
+              setSession(nextSession);
+              setCurrentUser(mapAccount(account));
+              if (['builder', 'owner', 'broker'].includes(role)) setActiveBuilderTab('home'); else setActiveCustomerTab('home');
+              setOnboardingStage('authenticated');
+              await loadAuthenticatedData(nextSession);
+            } catch {
+              Alert.alert('Unable to save account type', 'Please check your connection and try again.');
+            }
           }}
           onBack={() => {
             setOnboardingStage('otp');

@@ -13,6 +13,7 @@ export interface StoredSession {
     provider_type?: 'builder' | 'owner' | 'broker' | null;
     company_name?: string | null;
     is_admin: boolean;
+    requires_role_selection?: boolean;
   };
 }
 

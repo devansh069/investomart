@@ -1,9 +1,11 @@
 <?php
 
 use App\Http\Controllers\Api\V1\Admin\AdminController;
+use App\Http\Controllers\Api\V1\Admin\LegacyPropertyAdminController;
 use App\Http\Controllers\Api\V1\Auth\AuthController;
 use App\Http\Controllers\Api\V1\Inquiries\InquiryController;
 use App\Http\Controllers\Api\V1\Listings\FavoriteController;
+use App\Http\Controllers\Api\V1\Listings\PropertyMasterController;
 use App\Http\Controllers\Api\V1\Listings\PublicListingController;
 use App\Http\Controllers\Api\V1\Payments\PlanController;
 use App\Http\Controllers\Api\V1\Payments\RazorpayWebhookController;
@@ -17,13 +19,26 @@ Route::prefix('v1')->group(function (): void {
     Route::post('/webhooks/razorpay', RazorpayWebhookController::class);
 
     Route::prefix('auth')->group(function (): void {
-        Route::post('/otp/request', [AuthController::class, 'requestOtp'])->middleware('throttle:otp');
-        Route::post('/otp/verify', [AuthController::class, 'verifyOtp'])->middleware('throttle:otp');
+        Route::post('/otp/request', [AuthController::class, 'requestOtp'])->middleware('throttle:otp.request');
+        Route::post('/otp/verify', [AuthController::class, 'verifyOtp'])->middleware('throttle:otp.verify');
     });
 
     Route::get('/listings', [PublicListingController::class, 'index']);
     Route::get('/listings/{source}/{id}', [PublicListingController::class, 'show'])->whereIn('source', ['native', 'legacy_property']);
+    Route::prefix('property-masters')->group(function (): void {
+        Route::get('/categories', [PropertyMasterController::class, 'categories']);
+        Route::get('/cities', [PropertyMasterController::class, 'cities']);
+        Route::get('/cities/{cityId}/localities', [PropertyMasterController::class, 'localities'])->whereNumber('cityId');
+        Route::get('/projects', [PropertyMasterController::class, 'projects']);
+        Route::get('/amenities', [PropertyMasterController::class, 'amenities']);
+    });
     Route::get('/plans', [PlanController::class, 'index']);
+
+    Route::prefix('internal/admin')->middleware('legacy.admin.api')->group(function (): void {
+        Route::get('/properties', [LegacyPropertyAdminController::class, 'index']);
+        Route::get('/properties/{id}', [LegacyPropertyAdminController::class, 'show'])->whereNumber('id');
+        Route::post('/properties/{id}/review', [LegacyPropertyAdminController::class, 'review'])->whereNumber('id');
+    });
 
     Route::middleware('auth:sanctum')->group(function (): void {
         Route::get('/me', [AuthController::class, 'me']);
@@ -38,8 +53,8 @@ Route::prefix('v1')->group(function (): void {
             Route::get('/dashboard', [ProviderListingController::class, 'dashboard']);
             Route::get('/listings', [ProviderListingController::class, 'index']);
             Route::post('/listings', [ProviderListingController::class, 'store']);
-            Route::patch('/listings/{id}', [ProviderListingController::class, 'update']);
-            Route::patch('/listings/{id}/status', [ProviderListingController::class, 'updateStatus']);
+            Route::patch('/listings/{id}', [ProviderListingController::class, 'update'])->whereNumber('id');
+            Route::patch('/listings/{id}/status', [ProviderListingController::class, 'updateStatus'])->whereNumber('id');
             Route::post('/listings/{id}/media/upload-url', [ListingMediaController::class, 'uploadUrl']);
             Route::post('/listings/{id}/media', [ListingMediaController::class, 'attach']);
             Route::get('/inquiries', [InquiryController::class, 'providerIndex']);

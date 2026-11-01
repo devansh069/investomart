@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   View,
   Text,
   Image,
   TextInput,
+  type TextInputInstance,
   TouchableOpacity,
   TouchableWithoutFeedback,
   Keyboard,
@@ -22,6 +23,7 @@ import {
   ChevronDown,
   ArrowLeft,
   CheckCircle2,
+  UserCircle,
 } from 'lucide-react-native';
 import { ApiError } from '../../../core/api/client';
 import { requestOtp, verifyOtp } from '../../../core/api/investormart';
@@ -29,8 +31,17 @@ import type { StoredSession } from '../../../core/auth/session';
 
 const villaBg = require('../../../../assets/landing-villa.jpg');
 
+export type SignupRole = 'client' | 'builder' | 'owner' | 'broker';
+
+export interface SignupDetails {
+  role: SignupRole;
+  name: string;
+  email: string;
+  company_name?: string;
+}
+
 interface OtpLoginScreenProps {
-  onLoginSuccess: (session: StoredSession) => void | Promise<void>;
+  onLoginSuccess: (session: StoredSession, signupDetails?: SignupDetails) => void | Promise<void>;
   onBack?: () => void;
   onSkip?: () => void;
 }
@@ -47,19 +58,52 @@ export const OtpLoginScreen: React.FC<OtpLoginScreenProps> = ({
   const [phoneNumber, setPhoneNumber] = useState('');
   const [isOtpSent, setIsOtpSent] = useState(false);
   const [isSignUpMode, setIsSignUpMode] = useState(false);
+  const [selectedRole, setSelectedRole] = useState<SignupRole>('client');
+  const [fullName, setFullName] = useState('');
+  const [email, setEmail] = useState('');
+  const [companyName, setCompanyName] = useState('');
   const [otpCode, setOtpCode] = useState(['', '', '', '', '', '']);
   const [challengeId, setChallengeId] = useState<string | null>(null);
+  const [developmentOtp, setDevelopmentOtp] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const otpInputs = useRef<Array<TextInputInstance | null>>([]);
+
+  const updateOtpDigit = (index: number, value: string) => {
+    const digits = value.replace(/\D/g, '').slice(0, 6 - index);
+    const next = [...otpCode];
+    digits.split('').forEach((digit, offset) => { next[index + offset] = digit; });
+    if (digits === '') next[index] = '';
+    setOtpCode(next);
+
+    const nextIndex = Math.min(index + Math.max(digits.length, 1), 5);
+    if (digits !== '' && nextIndex > index) otpInputs.current[nextIndex]?.focus();
+  };
 
   const handleSendOtp = async () => {
-    if (phoneNumber.trim().length < 10) {
+    const phoneDigits = phoneNumber.replace(/\D/g, '');
+    if (phoneDigits.length !== 10) {
       Alert.alert('Phone Number Required', 'Please enter a valid 10-digit mobile number.');
       return;
+    }
+    if (isSignUpMode) {
+      if (fullName.trim().length < 2) {
+        Alert.alert('Full name required', 'Please enter your full name.');
+        return;
+      }
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+        Alert.alert('Valid email required', 'Please enter a valid email address.');
+        return;
+      }
+      if (selectedRole !== 'client' && companyName.trim().length < 2) {
+        Alert.alert('Company name required', 'Please enter your company or business name.');
+        return;
+      }
     }
     try {
       setIsSubmitting(true);
       const challenge = await requestOtp(phoneNumber);
       setChallengeId(challenge.challenge_id);
+      setDevelopmentOtp(challenge.development_otp ?? null);
       setIsOtpSent(true);
     } catch (error) {
       Alert.alert('OTP not sent', error instanceof ApiError ? error.message : 'Please check your connection and try again.');
@@ -76,7 +120,12 @@ export const OtpLoginScreen: React.FC<OtpLoginScreenProps> = ({
     try {
       setIsSubmitting(true);
       const session = await verifyOtp(challengeId, phoneNumber, otpCode.join(''));
-      await onLoginSuccess(session);
+      await onLoginSuccess(session, isSignUpMode ? {
+        role: selectedRole,
+        name: fullName.trim(),
+        email: email.trim(),
+        ...(selectedRole === 'client' ? {} : { company_name: companyName.trim() }),
+      } : undefined);
     } catch (error) {
       Alert.alert('Verification failed', error instanceof ApiError ? error.message : 'Please try again.');
     } finally {
@@ -86,10 +135,10 @@ export const OtpLoginScreen: React.FC<OtpLoginScreenProps> = ({
 
   return (
     <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       className="flex-1 bg-slate-900"
     >
-      <StatusBar barStyle="dark-content" translucent backgroundColor="transparent" />
+      <StatusBar barStyle="dark-content" />
 
       {/* 1. UPPER HERO SECTION WITH VILLA PHOTO */}
       <TouchableWithoutFeedback
@@ -188,6 +237,66 @@ export const OtpLoginScreen: React.FC<OtpLoginScreenProps> = ({
                   We'll send you a One Time Password (OTP)
                 </Text>
 
+                {isSignUpMode && (
+                  <>
+                    <Text className="text-[11px] font-semibold text-slate-700 mt-3 mb-1.5">Select Your Role</Text>
+                    <View className="flex-row space-x-2">
+                      <TouchableOpacity
+                        onPress={() => setSelectedRole('client')}
+                        activeOpacity={0.8}
+                        className={`flex-1 flex-row items-center justify-center py-2.5 px-2 rounded-2xl border ${
+                          selectedRole === 'client' ? 'bg-emerald-50 border-emerald-600' : 'bg-slate-50 border-slate-200'
+                        }`}
+                      >
+                        <UserCircle size={16} color={selectedRole === 'client' ? '#059669' : '#64748b'} />
+                        <Text className={`text-[11px] font-bold ml-1.5 ${selectedRole === 'client' ? 'text-emerald-700' : 'text-slate-600'}`}>Client</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        onPress={() => Alert.alert(
+                          'Choose provider type',
+                          'Builder, owner, and broker use the same workspace. This label is saved with your account.',
+                          [
+                            { text: 'Builder', onPress: () => setSelectedRole('builder') },
+                            { text: 'Owner', onPress: () => setSelectedRole('owner') },
+                            { text: 'Broker', onPress: () => setSelectedRole('broker') },
+                            { text: 'Cancel', style: 'cancel' },
+                          ],
+                        )}
+                        activeOpacity={0.8}
+                        className={`flex-1 flex-row items-center justify-center py-2.5 px-2 rounded-2xl border ml-2 ${
+                          selectedRole !== 'client' ? 'bg-amber-50 border-amber-600' : 'bg-slate-50 border-slate-200'
+                        }`}
+                      >
+                        <Building2 size={16} color={selectedRole !== 'client' ? '#b45309' : '#64748b'} />
+                        <Text className={`text-[11px] font-bold ml-1.5 ${selectedRole !== 'client' ? 'text-amber-700' : 'text-slate-600'}`}>
+                          {selectedRole === 'client' ? 'Provider' : selectedRole[0].toUpperCase() + selectedRole.slice(1)}
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+
+                    <Text className="text-[11px] font-semibold text-slate-700 mt-2.5 mb-1">Full Name</Text>
+                    <View className="flex-row items-center bg-white border border-slate-200 rounded-2xl px-3.5 py-2 shadow-2xs">
+                      <UserCircle size={16} color="#94a3b8" />
+                      <TextInput value={fullName} onChangeText={setFullName} placeholder="Enter your full name" placeholderTextColor="#94a3b8" autoCapitalize="words" className="flex-1 text-sm font-medium text-slate-900 py-0.5 ml-2" />
+                    </View>
+
+                    <Text className="text-[11px] font-semibold text-slate-700 mt-2.5 mb-1">Email Address</Text>
+                    <View className="flex-row items-center bg-white border border-slate-200 rounded-2xl px-3.5 py-2 shadow-2xs">
+                      <TextInput value={email} onChangeText={setEmail} placeholder="name@example.com" placeholderTextColor="#94a3b8" keyboardType="email-address" autoCapitalize="none" className="flex-1 text-sm font-medium text-slate-900 py-0.5" />
+                    </View>
+
+                    {selectedRole !== 'client' && (
+                      <>
+                        <Text className="text-[11px] font-semibold text-slate-700 mt-2.5 mb-1">Company / Business Name</Text>
+                        <View className="flex-row items-center bg-white border border-slate-200 rounded-2xl px-3.5 py-2 shadow-2xs">
+                          <Building2 size={16} color="#94a3b8" />
+                          <TextInput value={companyName} onChangeText={setCompanyName} placeholder="Enter your business name" placeholderTextColor="#94a3b8" autoCapitalize="words" className="flex-1 text-sm font-medium text-slate-900 py-0.5 ml-2" />
+                        </View>
+                      </>
+                    )}
+                  </>
+                )}
+
                 {/* Input Label */}
                 <Text className="text-[11px] font-semibold text-slate-700 mt-2.5 mb-1">
                   Phone Number
@@ -244,24 +353,33 @@ export const OtpLoginScreen: React.FC<OtpLoginScreenProps> = ({
                   Sent to +91 {phoneNumber}
                 </Text>
               </View>
-              <TouchableOpacity onPress={() => setIsOtpSent(false)}>
+              <TouchableOpacity onPress={() => { setIsOtpSent(false); setDevelopmentOtp(null); setOtpCode(['', '', '', '', '', '']); }}>
                 <Text className="text-xs font-bold text-emerald-600 underline">Change</Text>
               </TouchableOpacity>
             </View>
+
+            {developmentOtp && (
+              <View className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2">
+                <Text className="text-center text-xs font-bold text-amber-900">Development OTP: {developmentOtp}</Text>
+              </View>
+            )}
 
             {/* 4-digit OTP Boxes */}
             <View className="flex-row justify-between my-3">
               {[0, 1, 2, 3, 4, 5].map((idx) => (
                 <TextInput
                   key={idx}
+                  ref={(input) => { otpInputs.current[idx] = input; }}
                   value={otpCode[idx]}
-                  onChangeText={(val) => {
-                    const next = [...otpCode];
-                    next[idx] = val;
-                    setOtpCode(next);
+                  onChangeText={(value) => updateOtpDigit(idx, value)}
+                  onKeyPress={({ nativeEvent }) => {
+                    if (nativeEvent.key === 'Backspace' && otpCode[idx] === '' && idx > 0) {
+                      otpInputs.current[idx - 1]?.focus();
+                    }
                   }}
                   keyboardType="number-pad"
                   maxLength={1}
+                  selectTextOnFocus
                   className="w-13 h-13 border border-slate-200 rounded-2xl text-center text-lg font-black text-slate-900 bg-slate-50"
                 />
               ))}
@@ -280,29 +398,33 @@ export const OtpLoginScreen: React.FC<OtpLoginScreenProps> = ({
           </>
         )}
 
-        {/* Divider with "OR" */}
-        <View className="flex-row items-center my-2.5">
-          <View className="flex-1 h-px bg-slate-200" />
-          <Text className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-3">
-            OR
-          </Text>
-          <View className="flex-1 h-px bg-slate-200" />
-        </View>
+        {!isOtpSent && (
+          <>
+            {/* Divider with "OR" */}
+            <View className="flex-row items-center my-2.5">
+              <View className="flex-1 h-px bg-slate-200" />
+              <Text className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-3">
+                OR
+              </Text>
+              <View className="flex-1 h-px bg-slate-200" />
+            </View>
 
-        {/* Don't have an account? Sign up (enlarged font size) */}
-        <View className="flex-row items-center justify-center my-2">
-          <Text className="text-sm font-semibold text-slate-700">
-            {isSignUpMode ? 'Already have an account? ' : "Don't have an account? "}
-          </Text>
-          <TouchableOpacity
-            onPress={() => setIsSignUpMode(!isSignUpMode)}
-            activeOpacity={0.7}
-          >
-            <Text className="text-sm font-black text-emerald-600 underline ml-0.5">
-              {isSignUpMode ? 'Log in' : 'Sign up'}
-            </Text>
-          </TouchableOpacity>
-        </View>
+            {/* Don't have an account? Sign up (enlarged font size) */}
+            <View className="flex-row items-center justify-center my-2">
+              <Text className="text-sm font-semibold text-slate-700">
+                {isSignUpMode ? 'Already have an account? ' : "Don't have an account? "}
+              </Text>
+              <TouchableOpacity
+                onPress={() => setIsSignUpMode((current) => !current)}
+                activeOpacity={0.7}
+              >
+                <Text className="text-sm font-black text-emerald-600 underline ml-0.5">
+                  {isSignUpMode ? 'Log in' : 'Sign up'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </>
+        )}
 
         {/* 3 Compact Feature Badges Row */}
         <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>

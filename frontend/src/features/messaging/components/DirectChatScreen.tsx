@@ -3,6 +3,7 @@ import {
   View,
   Text,
   ScrollView,
+  type ScrollViewInstance,
   TouchableOpacity,
   Image,
   TextInput,
@@ -43,7 +44,7 @@ export const DirectChatScreen: React.FC<DirectChatScreenProps> = ({
   const [messages, setMessages] = useState<ChatMessage[]>(conversation.messages);
   const [inputText, setInputText] = useState('');
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
-  const scrollViewRef = useRef<ScrollView>(null);
+  const scrollViewRef = useRef<ScrollViewInstance>(null);
 
   const handleCall = () => {
     Alert.alert('Call', `Dial ${conversation.name}?`, [

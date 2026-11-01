@@ -58,7 +58,7 @@ class ListingPresenter
     }
 
     /** @param object $property @return array<string, mixed> */
-    public function legacy(object $property): array
+    public function legacy(object $property, bool $readOnly = true): array
     {
         $image = $this->legacyUrl($property->por_img_1 ?? $property->por_baner ?? $property->por_logo ?? null);
         $amenities = array_values(array_filter(array_map('trim', explode(',', (string) ($property->amenities ?? '')))));
@@ -68,7 +68,7 @@ class ListingPresenter
             'id' => 'legacy_property:'.$property->pro_id,
             'source' => 'legacy_property',
             'source_id' => (string) $property->pro_id,
-            'read_only' => true,
+            'read_only' => $readOnly,
             'title' => $property->pro_name ?: 'Property listing',
             'provider' => [
                 'id' => (string) ($property->userid ?? ''),
@@ -85,9 +85,9 @@ class ListingPresenter
             'price' => $price,
             'price_display' => $price === null ? null : '₹'.number_format($price, 0, '.', ','),
             'deposit' => null,
-            'area_sqft' => $this->numeric($property->por_sq1 ?? $property->super_area ?? null),
-            'area_unit' => $property->ppunit ?: 'sq.ft',
-            'furnishing' => $property->furnishing ?? null,
+            'area_sqft' => $this->numeric($property->por_size ?? $property->super_area ?? null),
+            'area_unit' => $property->por_sq1 ?: 'Sq Ft',
+            'furnishing' => $property->por_plan ?? null,
             'city' => $property->resolved_city ?: $property->pro_city ?: '',
             'location' => $property->resolved_location ?: $property->por_location ?: '',
             'address' => $property->por_locationmap ?: $property->resolved_location ?: $property->por_location ?: '',
@@ -95,9 +95,9 @@ class ListingPresenter
             'amenities' => $amenities,
             'image_url' => $image,
             'images' => array_values(array_filter(array_map(fn ($key) => $this->legacyUrl($property->{$key} ?? null), ['por_img_1', 'por_img_2', 'por_img_3', 'por_img_4', 'por_img_5']))),
-            'status' => 'ACTIVE',
-            'approval_status' => 'legacy',
-            'provider_status' => 'active',
+            'status' => $this->legacyWorkflowStatus($property),
+            'approval_status' => $this->legacyApprovalStatus($property),
+            'provider_status' => in_array(($property->mobile_status ?? null), ['paused', 'archived'], true) ? $property->mobile_status : 'active',
             'capacity_status' => 'legacy',
             'posted_at' => $property->time ?? null,
             'views_count' => (int) ($property->pageview ?? 0),
@@ -144,12 +144,28 @@ class ListingPresenter
 
     private function legacyPrice(object $property): ?float
     {
-        $structured = ((int) ($property->crore ?? 0) * 10000000)
+        $stored = $this->numeric($property->por_money ?? $property->por_inr ?? null);
+        if ($stored !== null && $stored > 0) {
+            return $stored;
+        }
+
+        return ((int) ($property->crore ?? 0) * 10000000)
             + ((int) ($property->lakh ?? 0) * 100000)
             + ((int) ($property->thousand ?? 0) * 1000)
-            + ((int) ($property->hundred ?? 0) * 100);
+            + ((int) ($property->hundred ?? 0) * 100) ?: null;
+    }
 
-        return $structured > 0 ? (float) $structured : $this->numeric($property->por_money ?? $property->por_inr ?? null);
+    private function legacyWorkflowStatus(object $property): string
+    {
+        return match ($property->mobile_status ?? null) {
+            'rejected' => 'REJECTED', 'paused' => 'PAUSED', 'archived' => 'ARCHIVED',
+            'pending' => 'PENDING', default => (int) ($property->status ?? 0) === 1 ? 'ACTIVE' : 'PENDING',
+        };
+    }
+
+    private function legacyApprovalStatus(object $property): string
+    {
+        return ($property->mobile_status ?? null) ?: ((int) ($property->status ?? 0) === 1 ? 'approved' : 'pending');
     }
 
     private function priceDisplay(float $price, string $listingType, ?string $period): string
@@ -169,7 +185,17 @@ class ListingPresenter
         }
         $base = config('investormart.legacy_media_base_url');
 
-        return blank($base) ? null : $base.'/'.ltrim($value, '/');
+        if (blank($base)) {
+            return null;
+        }
+
+        $path = ltrim($value, '/');
+        if (! str_contains($path, '/')) {
+            $prefix = config('investormart.legacy_property_media_prefix');
+            $path = blank($prefix) ? $path : trim($prefix, '/').'/'.$path;
+        }
+
+        return $base.'/'.$path;
     }
 
     private function mediaUrl(?string $objectKey): ?string

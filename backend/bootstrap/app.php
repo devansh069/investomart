@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\AuthenticateLegacyAdminApi;
 use App\Http\Middleware\EnsureAccountRole;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\AuthenticationException;
@@ -19,6 +20,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'account.role' => EnsureAccountRole::class,
+            'legacy.admin.api' => AuthenticateLegacyAdminApi::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

@@ -33,7 +33,7 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
 
   return (
     <View className="flex-1 bg-white relative">
-      <StatusBar barStyle="dark-content" translucent backgroundColor="transparent" />
+      <StatusBar barStyle="dark-content" />
 
       {/* 1. Full-screen Architectural Villa Photo Background */}
       <Image

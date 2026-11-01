@@ -32,9 +32,24 @@ return [
         'driver' => env('OTP_PROVIDER', 'log'),
         'endpoint' => env('OTP_ENDPOINT'),
         'token' => env('OTP_SERVICE_TOKEN'),
+        'userid' => env('OTP_SERVICE_USERID'),
+        'password' => env('OTP_SERVICE_PASSWORD'),
+        'auth_scheme' => env('OTP_AUTH_SCHEME', 'plain'),
+        'method' => env('OTP_METHOD', 'SendMessage'),
+        'message_type' => env('OTP_MSG_TYPE', 'text'),
+        'api_version' => env('OTP_API_VERSION', '1.1'),
+        'sender_prefix' => env('OTP_SENDER_PREFIX'),
+        'message_template' => env('OTP_MESSAGE_TEMPLATE'),
+        'ca_bundle' => env('OTP_CA_BUNDLE'),
         'sender_id' => env('OTP_SENDER_ID'),
         'dlt_entity_id' => env('OTP_DLT_ENTITY_ID'),
         'dlt_template_id' => env('OTP_DLT_TEMPLATE_ID'),
+        'staging_test_phone' => env('OTP_STAGING_TEST_PHONE'),
+        'staging_test_code' => env('OTP_STAGING_TEST_CODE'),
+    ],
+
+    'admin' => [
+        'api_key' => env('ADMIN_API_KEY'),
     ],
 
     'razorpay' => [

@@ -8,9 +8,7 @@ import {
   View,
 } from 'react-native';
 import {
-  ArrowLeft,
   Settings,
-  ArrowLeftRight,
   LogOut,
   UserCircle,
   HelpCircle,
@@ -22,7 +20,6 @@ import { BuilderProfileView } from '../../broker/components/BuilderProfileView';
 
 interface ProfileScreenProps {
   currentUser: User;
-  onToggleRole: () => void;
   onOpenAuth: () => void;
   onOpenAdmin: () => void;
   onLogout: () => void;
@@ -36,7 +33,6 @@ interface ProfileScreenProps {
 
 export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   currentUser,
-  onToggleRole,
   onOpenAuth,
   onOpenAdmin,
   onLogout,
@@ -130,15 +126,6 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
         {/* Bottom Actions */}
         <View className="px-5 mt-6 mb-8 space-y-3">
           <TouchableOpacity
-            onPress={onToggleRole}
-            activeOpacity={0.85}
-            className="w-full bg-slate-950 py-3.5 rounded-full flex-row items-center justify-center shadow-xs"
-          >
-            <ArrowLeftRight size={16} color="#ffffff" />
-            <Text className="ml-2 text-sm font-bold text-white">Switch to Builder View</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
             onPress={onOpenAdmin}
             activeOpacity={0.85}
             className="w-full border border-slate-300 bg-white py-3.5 rounded-full flex-row items-center justify-center mt-2.5"
@@ -170,13 +157,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
     <ScrollView className="flex-1 bg-white" showsVerticalScrollIndicator={false}>
       {/* 1. Header Bar */}
       <View className="px-5 py-3 flex-row items-center justify-between border-b border-slate-100 bg-white">
-        <TouchableOpacity
-          onPress={onToggleRole}
-          activeOpacity={0.7}
-          className="w-9 h-9 rounded-full bg-slate-100 items-center justify-center"
-        >
-          <ArrowLeft size={18} color="#0f172a" />
-        </TouchableOpacity>
+        <View className="w-9 h-9" />
 
         <Text className="text-base font-bold text-slate-900 tracking-tight">Builder Profile</Text>
 
@@ -203,15 +184,6 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
         isOwnerView={true}
         bottomActions={
           <View className="pt-4 border-t border-slate-100 mt-2 mb-8 space-y-3">
-            <TouchableOpacity
-              onPress={onToggleRole}
-              activeOpacity={0.85}
-              className="w-full bg-slate-950 py-3.5 rounded-full flex-row items-center justify-center shadow-xs"
-            >
-              <ArrowLeftRight size={16} color="#ffffff" />
-              <Text className="ml-2 text-sm font-bold text-white">Switch to Client View</Text>
-            </TouchableOpacity>
-
             <TouchableOpacity
               onPress={onOpenAdmin}
               activeOpacity={0.85}

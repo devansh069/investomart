@@ -20,8 +20,45 @@ class AuthController extends ApiController
     {
         $validated = $request->validate(['phone' => ['required', 'string', 'max:30'], 'country_code' => ['nullable', 'string', 'max:8']]);
         $phone = PhoneNumber::normalize($validated['phone'], $validated['country_code'] ?? '+91');
-        $otp = (string) random_int(100000, 999999);
+        $localTestOtp = $this->localTestOtp($phone['phone']);
+
+        if ($localTestOtp === null) {
+            $latestChallenge = OtpChallenge::query()
+                ->where('country_code', $phone['country_code'])
+                ->where('phone', $phone['phone'])
+                ->latest('sent_at')
+                ->first();
+            if ($latestChallenge !== null && $latestChallenge->sent_at->gt(now()->subSeconds((int) config('investormart.otp.resend_seconds')))) {
+                return $this->failure('Please wait before requesting another OTP.', 'OTP_RESEND_COOLDOWN', 429);
+            }
+            $maximumSends = 1 + (int) config('investormart.otp.max_resends_per_hour');
+            $sendsInLastHour = OtpChallenge::query()
+                ->where('country_code', $phone['country_code'])
+                ->where('phone', $phone['phone'])
+                ->where('sent_at', '>=', now()->subHour())
+                ->count();
+            if ($sendsInLastHour >= $maximumSends) {
+                return $this->failure('OTP request limit reached. Please try again later.', 'OTP_RESEND_LIMIT_REACHED', 429);
+            }
+        }
+        $isStagingTestPhone = app()->environment('staging')
+            && filled(config('services.otp.staging_test_phone'))
+            && hash_equals((string) config('services.otp.staging_test_phone'), $phone['phone'])
+            && filled(config('services.otp.staging_test_code'));
+        $otp = $localTestOtp ?? ($isStagingTestPhone
+            ? (string) config('services.otp.staging_test_code')
+            : (string) random_int(100000, 999999));
         $expiry = now()->addSeconds((int) config('investormart.otp.expiry_seconds'));
+
+        // A resend replaces the older code. Leaving two live challenges would
+        // allow an earlier SMS to authenticate the account after a newer code
+        // has been issued.
+        OtpChallenge::query()
+            ->where('country_code', $phone['country_code'])
+            ->where('phone', $phone['phone'])
+            ->whereNull('verified_at')
+            ->where('expires_at', '>', now())
+            ->update(['expires_at' => now()]);
 
         $challenge = OtpChallenge::query()->create([
             'id' => (string) Str::uuid(), 'country_code' => $phone['country_code'], 'phone' => $phone['phone'],
@@ -30,7 +67,9 @@ class AuthController extends ApiController
         ]);
 
         try {
-            $sender->send($phone['country_code'], $phone['phone'], $otp);
+            if ($localTestOtp === null && ! $isStagingTestPhone) {
+                $sender->send($phone['country_code'], $phone['phone'], $otp);
+            }
         } catch (\Throwable $exception) {
             $challenge->delete();
             report($exception);
@@ -38,11 +77,18 @@ class AuthController extends ApiController
             return $this->failure('We could not send an OTP right now. Please try again.', 'OTP_DELIVERY_FAILED', 503);
         }
 
-        return $this->success([
+        $response = [
             'challenge_id' => $challenge->id,
             'expires_at' => $expiry->toIso8601String(),
             'resend_after_seconds' => (int) config('investormart.otp.resend_seconds'),
-        ], 'OTP sent successfully.', 202);
+        ];
+        // The OTP is exposed only for the local development log driver. Live
+        // SMS configurations never receive it in an API response.
+        if (app()->environment('local') && config('services.otp.driver') === 'log') {
+            $response['development_otp'] = $otp;
+        }
+
+        return $this->success($response, 'OTP sent successfully.', 202);
     }
 
     public function verifyOtp(Request $request, AccountProvisioner $provisioner): JsonResponse
@@ -73,7 +119,13 @@ class AuthController extends ApiController
             return $this->failure('This account is disabled.', 'ACCOUNT_DISABLED', 403);
         }
 
+        // AccountProvisioner uses this transient response-only attribute to
+        // tell the app whether first-time role setup is needed. Remove it
+        // before Eloquent persists the verification timestamp.
+        $requiresRoleSelection = (bool) ($account->getAttribute('requires_role_selection') ?? false);
+        unset($account->requires_role_selection);
         $account->forceFill(['phone_verified_at' => now()])->save();
+        $account->setAttribute('requires_role_selection', $requiresRoleSelection);
         $token = $account->createToken('mobile-app', ['*'], now()->addDays(30))->plainTextToken;
 
         return $this->success(['access_token' => $token, 'token_type' => 'Bearer', 'account' => $this->account($account)]);
@@ -84,7 +136,7 @@ class AuthController extends ApiController
         return $this->success(['account' => $this->account($request->user())]);
     }
 
-    public function updateMe(Request $request): JsonResponse
+    public function updateMe(Request $request, AccountProvisioner $provisioner): JsonResponse
     {
         /** @var Account $account */
         $account = $request->user();
@@ -102,8 +154,9 @@ class AuthController extends ApiController
             $validated['provider_type'] = $validated['role'] === 'client' ? null : $validated['role'];
         }
         $account->fill($validated)->save();
+        $account = $provisioner->syncLegacyAccount($account);
 
-        return $this->success(['account' => $this->account($account->fresh())], 'Profile updated.');
+        return $this->success(['account' => $this->account($account)], 'Profile updated.');
     }
 
     public function logout(Request $request): JsonResponse
@@ -122,6 +175,30 @@ class AuthController extends ApiController
             'role' => $account->role, 'provider_type' => $account->provider_type,
             'company_name' => $account->company_name, 'avatar_url' => $account->avatar_url,
             'profile' => $account->profile ?? [], 'is_admin' => $account->isAdmin(),
+            // This transient flag is set only when a mobile number did not
+            // already exist in the legacy user table. It lets the mobile app
+            // ask for the initial account type once, without asking on login.
+            'requires_role_selection' => (bool) ($account->getAttribute('requires_role_selection') ?? false),
         ];
+    }
+
+    private function localTestOtp(string $phone): ?string
+    {
+        if (! app()->environment('local')) {
+            return null;
+        }
+
+        foreach (explode(',', (string) config('investormart.otp.local_test_accounts')) as $entry) {
+            [$configuredPhone] = array_pad(explode(':', trim($entry), 2), 1, '');
+            $configuredPhone = preg_replace('/\D+/', '', $configuredPhone) ?? '';
+
+            if ($configuredPhone !== '' && hash_equals($configuredPhone, $phone)) {
+                $code = (string) config('investormart.otp.local_test_code');
+
+                return preg_match('/^\d{6}$/', $code) ? $code : null;
+            }
+        }
+
+        return null;
     }
 }

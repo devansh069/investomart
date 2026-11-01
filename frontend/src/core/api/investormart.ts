@@ -52,6 +52,15 @@ type ApiAccount = StoredSession['account'] & {
   avatar_url?: string | null;
 };
 
+export interface ProfileUpdate {
+  name?: string;
+  email?: string;
+  company_name?: string;
+  avatar_url?: string;
+  role?: 'client' | 'builder' | 'owner' | 'broker';
+  profile?: Record<string, unknown>;
+}
+
 const fallbackImage = 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1000&q=80';
 
 export function mapAccount(account: StoredSession['account']): User {
@@ -121,8 +130,8 @@ export function mapInquiry(inquiry: ApiInquiry): Inquiry {
   };
 }
 
-export async function requestOtp(phone: string): Promise<{ challenge_id: string }> {
-  const response = await apiRequest<{ challenge_id: string }>('auth/otp/request', { method: 'POST', body: { phone } });
+export async function requestOtp(phone: string): Promise<{ challenge_id: string; development_otp?: string }> {
+  const response = await apiRequest<{ challenge_id: string; development_otp?: string }>('auth/otp/request', { method: 'POST', body: { phone } });
   return response.data;
 }
 
@@ -133,7 +142,7 @@ export async function verifyOtp(challengeId: string, phone: string, otp: string)
   return { accessToken: response.data.access_token, account: response.data.account };
 }
 
-export async function updateMyProfile(token: string, updates: Record<string, unknown>): Promise<StoredSession['account']> {
+export async function updateMyProfile(token: string, updates: ProfileUpdate): Promise<StoredSession['account']> {
   const response = await apiRequest<{ account: ApiAccount }>('me', { method: 'PATCH', body: updates, accessToken: token });
   return response.data.account;
 }

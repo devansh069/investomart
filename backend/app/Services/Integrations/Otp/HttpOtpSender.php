@@ -17,19 +17,21 @@ class HttpOtpSender implements OtpSender
             throw new RuntimeException('The OTP provider is not configured.');
         }
 
-        $response = Http::acceptJson()
+        $http = Http::acceptJson()
+            ->connectTimeout(5)
             ->timeout(10)
-            ->retry(2, 250)
-            ->post($endpoint, [
-                'token' => $token,
-                'otp' => $otp,
-                'mobileno' => $mobileNumber,
-                'sender_id' => config('services.otp.sender_id'),
-                'dlt_entity_id' => config('services.otp.dlt_entity_id'),
-                'dlt_template_id' => config('services.otp.dlt_template_id'),
-            ]);
+            ->retry(2, 250);
+        $caBundle = config('services.otp.ca_bundle');
+        if (filled($caBundle)) {
+            $http = $http->withOptions(['verify' => is_file($caBundle) ? $caBundle : base_path($caBundle)]);
+        }
+        $response = $http->post($endpoint, [
+            'token' => $token,
+            'otp' => $otp,
+            'mobileno' => $mobileNumber,
+        ]);
 
-        if (! $response->successful()) {
+        if (! $response->successful() || (int) $response->json('status') !== 1) {
             throw new RuntimeException('The OTP provider rejected the delivery request.');
         }
     }

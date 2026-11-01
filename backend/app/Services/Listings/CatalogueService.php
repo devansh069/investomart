@@ -46,7 +46,7 @@ class CatalogueService
         }
 
         if ($source === 'legacy_property') {
-            $property = DB::table('property')->where('pro_id', $id)->where('is_delete', 0)->first();
+            $property = DB::table('property')->where('pro_id', $id)->where('is_delete', 0)->where('status', 1)->first();
 
             return $property === null ? null : $this->presenter->legacy($property);
         }
@@ -73,7 +73,7 @@ class CatalogueService
             ->where('is_delete', 0)
             ->orderByDesc('time')
             ->get()
-            ->map(fn (object $property): array => $this->presenter->legacy($property));
+            ->map(fn (object $property): array => $this->presenter->legacy($property, false));
 
         return $native->concat($legacy)->sortByDesc('posted_at')->values();
     }
@@ -115,7 +115,8 @@ class CatalogueService
             ->leftJoin('property_cat as pc', 'p.pro_cat', '=', 'pc.id')
             ->leftJoin('prperty_for as pf', 'p.pro_for', '=', 'pf.id')
             ->select(['p.*', 'c.city as resolved_city', 'l.lname as resolved_location', 'pc.name as resolved_property_type', 'pf.name as resolved_listing_type'])
-            ->where('p.is_delete', 0);
+            ->where('p.is_delete', 0)
+            ->where('p.status', 1);
         $search = trim((string) $request->input('search'));
 
         if ($search !== '') {
