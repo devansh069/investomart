@@ -37,6 +37,7 @@ Route::prefix('v1')->group(function (): void {
 
     Route::prefix('internal/admin')->middleware('legacy.admin.api')->group(function (): void {
         Route::get('/properties', [LegacyPropertyAdminController::class, 'index']);
+        Route::post('/properties/bulk-review', [LegacyPropertyAdminController::class, 'bulkReview']);
         Route::get('/properties/{id}', [LegacyPropertyAdminController::class, 'show'])->whereNumber('id');
         Route::post('/properties/{id}/review', [LegacyPropertyAdminController::class, 'review'])->whereNumber('id');
     });

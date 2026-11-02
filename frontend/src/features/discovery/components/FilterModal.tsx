@@ -326,14 +326,14 @@ export const FilterModal: React.FC<FilterModalProps> = ({
     onResetFilters();
     setLocalFilters({
       searchQuery: '',
-      city: 'New Delhi, India',
-      propertyType: 'Apartment',
+      city: 'All Cities',
+      propertyType: 'All',
       bhk: null,
       bathrooms: null,
-      minRent: 5000,
-      maxRent: 200000,
-      minArea: 500,
-      maxArea: 5000,
+      minRent: null,
+      maxRent: null,
+      minArea: null,
+      maxArea: null,
       furnishing: 'All',
       selectedAmenities: [],
     });

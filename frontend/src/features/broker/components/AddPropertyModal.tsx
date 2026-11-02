@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import { ArrowLeft, ArrowRight, Building, Building2, Check, CheckCircle2, Compass, Home, ImagePlus, Trash2 } from 'lucide-react-native';
 import { allAmenitiesList } from '../../../mock/data';
+import { ApiError } from '../../../core/api/client';
 import type { FurnishingType, ListingType, PropertyType } from '../../../types';
 
 export type PropertyImageDraft = {
@@ -190,7 +191,10 @@ export const AddPropertyModal: React.FC<AddPropertyModalProps> = ({ visible, onC
       Alert.alert('Property submitted', 'Your property has been sent for admin approval.');
       resetAndClose();
     } catch (error) {
-      Alert.alert('Unable to submit property', error instanceof Error ? error.message : 'Please try again.');
+      const validationMessage = error instanceof ApiError
+        ? Object.values(error.body?.errors ?? {}).flat()[0]
+        : undefined;
+      Alert.alert('Unable to submit property', validationMessage || (error instanceof Error ? error.message : 'Please try again.'));
       setIsSubmitting(false);
     }
   };

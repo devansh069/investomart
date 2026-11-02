@@ -17,8 +17,8 @@ class LegacyPropertyAdminController extends ApiController
         $query = $this->propertyQuery()->where(function ($nested): void {
             $nested->where('p.is_delete', 0)->orWhereNull('p.is_delete');
         });
-        if ($request->filled('status')) {
-            $status = $request->input('status');
+        $status = $request->input('mobile_status', $request->input('status'));
+        if ($status !== null) {
             if ($status === 'approved') {
                 $query->where('p.status', 1)->where(function ($nested): void {
                     $nested->where('p.mobile_status', 'approved')->orWhereNull('p.mobile_status');
@@ -32,6 +32,12 @@ class LegacyPropertyAdminController extends ApiController
         }
         if ($request->filled('category_id')) {
             $query->where('p.pro_cat', $request->integer('category_id'));
+        }
+        if ($request->filled('type')) {
+            $query->where('p.pro_type', $request->input('type'));
+        }
+        if ($request->filled('provider_id')) {
+            $query->where('p.userid', (string) $request->integer('provider_id'));
         }
         if ($request->filled('search')) {
             $search = '%'.trim((string) $request->input('search')).'%';
@@ -56,7 +62,7 @@ class LegacyPropertyAdminController extends ApiController
     public function review(Request $request, int $id, ListingPresenter $presenter): JsonResponse
     {
         $validated = $request->validate([
-            'decision' => ['required', Rule::in(['approved', 'rejected'])],
+            'decision' => ['required', Rule::in(['approved', 'rejected', 'paused'])],
             'reason' => ['nullable', 'string', 'max:5000', Rule::requiredIf($request->input('decision') === 'rejected')],
         ]);
         $property = DB::table('property')->where('pro_id', $id)->where(function ($q): void {
@@ -65,18 +71,36 @@ class LegacyPropertyAdminController extends ApiController
         abort_if($property === null, 404, 'Property not found.');
         $admin = $request->attributes->get('legacy_admin');
         $from = $property->mobile_status ?: ((int) $property->status === 1 ? 'approved' : 'pending');
-        $approved = $validated['decision'] === 'approved';
-
-        DB::table('property')->where('pro_id', $id)->update([
-            'status' => $approved ? 1 : 0,
-            'mobile_status' => $validated['decision'],
-            'rejection_reason' => $approved ? null : $validated['reason'],
-            'approved_at' => $approved ? now() : null,
-            'approved_by' => $admin->user_id,
-        ]);
-        $this->writeHistory($id, $from, $validated['decision'], $validated['reason'] ?? null, $admin->user_id);
+        $this->applyReview($id, $from, $validated['decision'], $validated['reason'] ?? null, (int) $admin->user_id);
 
         return $this->show($id, $presenter);
+    }
+
+    public function bulkReview(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'property_ids' => ['required', 'array', 'min:1', 'max:100'],
+            'property_ids.*' => ['integer', 'distinct'],
+            'decision' => ['required', Rule::in(['approved', 'rejected', 'paused'])],
+            'reason' => ['nullable', 'string', 'max:5000', Rule::requiredIf($request->input('decision') === 'rejected')],
+        ]);
+        $admin = $request->attributes->get('legacy_admin');
+        $properties = DB::table('property')
+            ->whereIn('pro_id', $validated['property_ids'])
+            ->where(fn ($query) => $query->where('is_delete', 0)->orWhereNull('is_delete'))
+            ->get(['pro_id', 'status', 'mobile_status']);
+
+        DB::transaction(function () use ($properties, $validated, $admin): void {
+            foreach ($properties as $property) {
+                $from = $property->mobile_status ?: ((int) $property->status === 1 ? 'approved' : 'pending');
+                $this->applyReview((int) $property->pro_id, $from, $validated['decision'], $validated['reason'] ?? null, (int) $admin->user_id);
+            }
+        });
+
+        return $this->success([
+            'reviewed_property_ids' => $properties->pluck('pro_id')->map(fn ($id): int => (int) $id)->values(),
+            'not_found_property_ids' => array_values(array_diff($validated['property_ids'], $properties->pluck('pro_id')->map(fn ($id): int => (int) $id)->all())),
+        ], 'Properties reviewed.');
     }
 
     public function history(int $id): array
@@ -106,5 +130,18 @@ class LegacyPropertyAdminController extends ApiController
             'property_id' => $propertyId, 'from_status' => $from, 'to_status' => $to, 'reason' => $reason,
             'acted_by_admin_id' => $adminId, 'acted_at' => now(), 'source' => 'admin_api',
         ]);
+    }
+
+    private function applyReview(int $propertyId, string $from, string $decision, ?string $reason, int $adminId): void
+    {
+        $approved = $decision === 'approved';
+        DB::table('property')->where('pro_id', $propertyId)->update([
+            'status' => $approved ? 1 : 0,
+            'mobile_status' => $decision,
+            'rejection_reason' => $decision === 'rejected' ? $reason : null,
+            'approved_at' => $approved ? now() : null,
+            'approved_by' => $adminId,
+        ]);
+        $this->writeHistory($propertyId, $from, $decision, $reason, $adminId);
     }
 }

@@ -1,4 +1,6 @@
 import { apiRequest } from './client';
+import { fetch as expoFetch } from 'expo/fetch';
+import { File } from 'expo-file-system';
 import type { ApiEnvelope } from './types';
 import type { StoredSession } from '../auth/session';
 import type { Inquiry, Property, User } from '../../types';
@@ -211,14 +213,17 @@ export async function uploadLegacyPropertyImage(token: string, image: PropertyUp
     method: 'POST', accessToken: token,
     body: { filename: image.filename, content_type: image.contentType, size_bytes: image.sizeBytes },
   });
-  const source = await fetch(image.uri);
-  if (!source.ok) throw new Error('Unable to read the selected property image.');
-  const body = await source.blob();
   const upload = response.data.upload;
-  const result = await fetch(upload.upload_url, {
+  const file = new File(image.uri);
+  if (!file.exists) throw new Error('The selected property image is no longer available. Please select it again.');
+  const headers = Object.fromEntries(
+    Object.entries(upload.headers ?? {}).filter(([name]) => name.toLowerCase() !== 'host'),
+  );
+  headers['Content-Type'] = image.contentType;
+  const result = await expoFetch(upload.upload_url, {
     method: 'PUT',
-    headers: { 'Content-Type': image.contentType, ...(upload.headers ?? {}) },
-    body,
+    headers,
+    body: file,
   });
   if (!result.ok) throw new Error('Unable to upload a property image. Please try again.');
   return upload.object_key;

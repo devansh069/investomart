@@ -44,10 +44,12 @@ const defaultFilters: FilterState = {
   propertyType: 'All',
   bhk: null,
   bathrooms: null,
-  minRent: 5000,
-  maxRent: 200000,
-  minArea: 500,
-  maxArea: 5000,
+  // No hidden budget or area limit on first load. The catalogue contains
+  // sale and large-area properties in addition to ordinary rentals.
+  minRent: null,
+  maxRent: null,
+  minArea: null,
+  maxArea: null,
   furnishing: 'All',
   selectedAmenities: [],
 };
