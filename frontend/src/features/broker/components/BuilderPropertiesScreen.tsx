@@ -17,24 +17,25 @@ import {
   MoreHorizontal,
 } from 'lucide-react-native';
 import { Property, PropertyStatus } from '../../../types';
+import type { ProviderListingStatusAction } from '../../../core/api/investormart';
 
 interface BuilderPropertiesScreenProps {
   properties: Property[];
   onOpenAddModal: () => void;
   onSelectProperty: (property: Property) => void;
   onDeleteProperty: (id: string) => void;
-  onToggleStatus: (id: string) => void;
+  onChangeStatus: (id: string, action: ProviderListingStatusAction) => void;
   onBack: () => void;
 }
 
-type FilterTab = 'all' | 'active' | 'inactive';
+type FilterTab = 'all' | 'active' | 'pending' | 'paused' | 'archived';
 
 export const BuilderPropertiesScreen: React.FC<BuilderPropertiesScreenProps> = ({
   properties,
   onOpenAddModal,
   onSelectProperty,
   onDeleteProperty,
-  onToggleStatus,
+  onChangeStatus,
   onBack,
 }) => {
   const [activeTab, setActiveTab] = useState<FilterTab>('all');
@@ -43,12 +44,26 @@ export const BuilderPropertiesScreen: React.FC<BuilderPropertiesScreenProps> = (
   const filteredProperties = properties.filter((prop) => {
     if (activeTab === 'all') return true;
     if (activeTab === 'active') return prop.status === 'ACTIVE';
-    if (activeTab === 'inactive') return prop.status !== 'ACTIVE';
+    if (activeTab === 'pending') return prop.status === 'PENDING' || prop.status === 'REJECTED';
+    if (activeTab === 'paused') return prop.status === 'PAUSED';
+    if (activeTab === 'archived') return prop.status === 'ARCHIVED';
     return true;
   });
 
   const activeCount = properties.filter((p) => p.status === 'ACTIVE').length;
-  const inactiveCount = properties.filter((p) => p.status !== 'ACTIVE').length;
+  const pendingCount = properties.filter((p) => p.status === 'PENDING' || p.status === 'REJECTED').length;
+  const pausedCount = properties.filter((p) => p.status === 'PAUSED').length;
+  const archivedCount = properties.filter((p) => p.status === 'ARCHIVED').length;
+
+  const statusAction = (property: Property): { label: string; action: ProviderListingStatusAction; confirmation: string } | null => {
+    if (property.status === 'ACTIVE') {
+      return { label: 'Deactivate listing', action: 'paused', confirmation: 'This property will be hidden from clients until you restore it.' };
+    }
+    if (property.status === 'PAUSED' || property.status === 'ARCHIVED') {
+      return { label: 'Restore for approval', action: 'restore', confirmation: 'This property will be sent to the admin for approval before it is visible to clients.' };
+    }
+    return null;
+  };
 
   const handleActionMenu = (prop: Property) => {
     Alert.alert(
@@ -59,10 +74,16 @@ export const BuilderPropertiesScreen: React.FC<BuilderPropertiesScreenProps> = (
           text: 'View Details',
           onPress: () => onSelectProperty(prop),
         },
-        {
-          text: prop.status === 'ACTIVE' ? 'Mark as Inactive' : 'Mark as Active',
-          onPress: () => onToggleStatus(prop.id),
-        },
+        ...(statusAction(prop) ? [{
+          text: statusAction(prop)!.label,
+          onPress: () => {
+            const next = statusAction(prop)!;
+            Alert.alert(next.label, next.confirmation, [
+              { text: 'Cancel', style: 'cancel' },
+              { text: 'Continue', onPress: () => onChangeStatus(prop.id, next.action) },
+            ]);
+          },
+        }] : []),
         {
           text: 'Delete Listing',
           style: 'destructive',
@@ -90,9 +111,12 @@ export const BuilderPropertiesScreen: React.FC<BuilderPropertiesScreenProps> = (
         </View>
       );
     }
+    const labels: Partial<Record<PropertyStatus, string>> = {
+      PENDING: 'Pending approval', REJECTED: 'Rejected', PAUSED: 'Paused', ARCHIVED: 'Archived', PLAN_HOLD: 'Plan hold',
+    };
     return (
       <View className="bg-slate-100 px-2 py-0.5 rounded-full border border-slate-200">
-        <Text className="text-[11px] font-bold text-slate-500">Inactive</Text>
+        <Text className="text-[11px] font-bold text-slate-500">{labels[status] ?? 'Inactive'}</Text>
       </View>
     );
   };
@@ -172,20 +196,32 @@ export const BuilderPropertiesScreen: React.FC<BuilderPropertiesScreenProps> = (
           </TouchableOpacity>
 
           <TouchableOpacity
-            onPress={() => setActiveTab('inactive')}
+            onPress={() => setActiveTab('pending')}
             className={`px-4 py-2 rounded-full border ${
-              activeTab === 'inactive'
+              activeTab === 'pending'
                 ? 'bg-slate-950 border-slate-950'
                 : 'bg-white border-slate-200'
             }`}
           >
             <Text
               className={`text-xs font-bold ${
-                activeTab === 'inactive' ? 'text-white' : 'text-slate-600'
+                activeTab === 'pending' ? 'text-white' : 'text-slate-600'
               }`}
             >
-              Inactive ({inactiveCount})
+              Pending ({pendingCount})
             </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => setActiveTab('paused')}
+            className={`px-4 py-2 rounded-full border ${activeTab === 'paused' ? 'bg-slate-950 border-slate-950' : 'bg-white border-slate-200'}`}
+          >
+            <Text className={`text-xs font-bold ${activeTab === 'paused' ? 'text-white' : 'text-slate-600'}`}>Paused ({pausedCount})</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => setActiveTab('archived')}
+            className={`px-4 py-2 rounded-full border ${activeTab === 'archived' ? 'bg-slate-950 border-slate-950' : 'bg-white border-slate-200'}`}
+          >
+            <Text className={`text-xs font-bold ${activeTab === 'archived' ? 'text-white' : 'text-slate-600'}`}>Archived ({archivedCount})</Text>
           </TouchableOpacity>
         </ScrollView>
       </View>

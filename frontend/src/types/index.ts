@@ -6,6 +6,7 @@ export interface User {
   email: string;
   phone: string;
   role: UserRole;
+  providerType?: 'builder' | 'owner' | 'broker';
   avatarUrl?: string;
   companyName?: string;
 }
@@ -53,6 +54,8 @@ export type InquiryStatus = 'NEW' | 'SITE_VISIT' | 'CONTACTED' | 'INTERESTED' | 
 
 export interface Inquiry {
   id: string;
+  /** How the client first contacted the provider for this property. */
+  channel?: 'FORM' | 'CALL' | 'WHATSAPP';
   propertyId: string;
   propertyTitle: string;
   propertyRent: number;

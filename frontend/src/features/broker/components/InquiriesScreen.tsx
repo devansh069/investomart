@@ -16,6 +16,7 @@ import {
   MessageSquare,
   ArrowRight,
   MapPin,
+  Send,
 } from 'lucide-react-native';
 import { BuilderLogoBadge } from '../../../shared/components/BuilderLogoBadge';
 
@@ -24,7 +25,6 @@ interface InquiriesScreenProps {
   properties?: Property[];
   onSelectProperty?: (property: Property) => void;
   onMarkContacted?: (id: string) => void;
-  onOpenChat?: (inquiry: Inquiry) => void;
   onOpenMenu?: () => void;
   onOpenNotifications?: () => void;
 }
@@ -36,7 +36,6 @@ export const InquiriesScreen: React.FC<InquiriesScreenProps> = ({
   properties = [],
   onSelectProperty,
   onMarkContacted,
-  onOpenChat,
   onOpenMenu,
   onOpenNotifications,
 }) => {
@@ -144,6 +143,22 @@ export const InquiriesScreen: React.FC<InquiriesScreenProps> = ({
           </View>
         );
     }
+  };
+
+  const renderChannelBadge = (channel: NonNullable<Inquiry['channel']>) => {
+    const label = channel === 'WHATSAPP' ? 'WhatsApp enquiry' : channel === 'CALL' ? 'Call enquiry' : 'Form enquiry';
+    const tone = channel === 'WHATSAPP'
+      ? 'bg-emerald-50 border-emerald-100 text-emerald-700'
+      : channel === 'CALL'
+        ? 'bg-sky-50 border-sky-100 text-sky-700'
+        : 'bg-violet-50 border-violet-100 text-violet-700';
+
+    return (
+      <View className={`self-start mt-1.5 px-2 py-1 rounded-md border flex-row items-center ${tone}`}>
+        {channel === 'CALL' ? <Phone size={11} color="#0369a1" /> : <Send size={11} color={channel === 'WHATSAPP' ? '#047857' : '#6d28d9'} />}
+        <Text className="ml-1 text-[10px] font-bold">{label}</Text>
+      </View>
+    );
   };
 
   const tabs: { key: FilterTabKey; label: string; count: number }[] = [
@@ -264,6 +279,7 @@ export const InquiriesScreen: React.FC<InquiriesScreenProps> = ({
                         {inq.timeAgo || inq.createdAt || '2 hours ago'}
                       </Text>
                     </View>
+                    {renderChannelBadge(inq.channel ?? 'FORM')}
                   </View>
                 </View>
 
@@ -302,7 +318,7 @@ export const InquiriesScreen: React.FC<InquiriesScreenProps> = ({
                   </View>
                 </TouchableOpacity>
 
-                {/* Action Row: Phone, Chat, View Details */}
+                {/* Follow-up actions. This opens device apps; there is no in-app chat. */}
                 <View className="flex-row items-center">
                   {/* Phone Button */}
                   <TouchableOpacity
@@ -313,13 +329,13 @@ export const InquiriesScreen: React.FC<InquiriesScreenProps> = ({
                     <Phone size={17} color="#1E293B" />
                   </TouchableOpacity>
 
-                  {/* Chat Button */}
+                  {/* WhatsApp follow-up Button */}
                   <TouchableOpacity
                     activeOpacity={0.7}
-                    onPress={() => (onOpenChat ? onOpenChat(inq) : handleMessage(inq))}
+                    onPress={() => handleMessage(inq)}
                     className="w-12 h-10 rounded-xl border border-slate-200 items-center justify-center bg-white ml-2.5 active:bg-slate-50"
                   >
-                    <MessageSquare size={17} color="#1E293B" />
+                    <MessageSquare size={17} color="#15803d" />
                   </TouchableOpacity>
 
                   {/* View Details Button */}

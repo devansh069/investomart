@@ -16,7 +16,6 @@ import {
 } from 'lucide-react-native';
 
 import { User, Property } from '../../../types';
-import { BuilderProfileView } from '../../broker/components/BuilderProfileView';
 
 interface ProfileScreenProps {
   currentUser: User;
@@ -25,6 +24,7 @@ interface ProfileScreenProps {
   onLogout: () => void;
   propertiesCount: number;
   inquiriesCount: number;
+  listingCapacity?: number;
   properties?: Property[];
   onSelectProperty?: (property: Property) => void;
   favoriteIds?: string[];
@@ -38,6 +38,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   onLogout,
   propertiesCount,
   inquiriesCount,
+  listingCapacity = 10,
   properties = [],
   onSelectProperty,
   favoriteIds = [],
@@ -152,7 +153,12 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
     );
   }
 
-  // Builder Profile matching provided screenshot & reusing BuilderProfileView
+  const activeProperties = properties.filter((property) => property.status === 'ACTIVE').length;
+  const deactivatedProperties = properties.filter((property) => property.status === 'PAUSED' || property.status === 'ARCHIVED').length;
+  const pendingProperties = properties.filter((property) => property.status === 'PENDING' || property.status === 'REJECTED').length;
+
+  // Provider profile deliberately uses live app state instead of the
+  // decorative public-builder data used elsewhere in the older UI.
   return (
     <ScrollView className="flex-1 bg-white" showsVerticalScrollIndicator={false}>
       {/* 1. Header Bar */}
@@ -170,45 +176,94 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
         </TouchableOpacity>
       </View>
 
-      {/* Shared Unified Builder Profile Component */}
-      <BuilderProfileView
-        builderProfile={{
-          name: currentUser.companyName || currentUser.name || 'Nexa Homes Pvt. Ltd.',
-          email: currentUser.email,
-          phone: currentUser.phone,
-        }}
-        builderProperties={properties}
-        onSelectProperty={onSelectProperty}
-        favoriteIds={favoriteIds}
-        onToggleFavorite={onToggleFavorite}
-        isOwnerView={true}
-        bottomActions={
-          <View className="pt-4 border-t border-slate-100 mt-2 mb-8 space-y-3">
-            <TouchableOpacity
-              onPress={onOpenAdmin}
-              activeOpacity={0.85}
-              className="w-full border border-slate-300 bg-white py-3.5 rounded-full flex-row items-center justify-center mt-2.5"
-            >
-              <Settings size={16} color="#0f172a" />
-              <Text className="ml-2 text-sm font-bold text-slate-900">Admin Panel</Text>
-            </TouchableOpacity>
+      <View className="mx-5 mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+        <Text className="text-sm font-bold text-slate-900">Account details</Text>
+        <Text className="mt-2 text-sm font-semibold text-slate-900">{currentUser.name}</Text>
+        <Text className="mt-0.5 text-xs text-slate-600">{currentUser.email || 'Email not added'}</Text>
+        <Text className="mt-0.5 text-xs text-slate-600">{currentUser.phone}</Text>
+        <Text className="mt-2 text-[11px] font-bold uppercase tracking-wide text-emerald-700">{currentUser.providerType || 'provider'} account</Text>
+      </View>
 
-            <TouchableOpacity
-              onPress={() =>
-                Alert.alert('Sign out', 'Sign out of this session?', [
-                  { text: 'Cancel', style: 'cancel' },
-                  { text: 'Sign out', style: 'destructive', onPress: onLogout },
-                ])
-              }
-              activeOpacity={0.8}
-              className="w-full border border-red-200 bg-red-50 py-3.5 rounded-full flex-row items-center justify-center mt-2.5"
-            >
-              <LogOut size={16} color="#dc2626" />
-              <Text className="ml-2 text-sm font-bold text-red-600">Sign Out</Text>
-            </TouchableOpacity>
+      <View className="mx-5 mt-3 flex-row rounded-2xl border border-slate-200 bg-white py-3">
+        <View className="flex-1 items-center">
+          <Text className="text-base font-black text-slate-900">{propertiesCount}</Text>
+          <Text className="mt-0.5 text-[10px] text-slate-500">Total properties</Text>
+        </View>
+        <View className="w-px bg-slate-200" />
+        <View className="flex-1 items-center">
+          <Text className="text-base font-black text-emerald-600">{activeProperties}</Text>
+          <Text className="mt-0.5 text-[10px] text-slate-500">Live</Text>
+        </View>
+        <View className="w-px bg-slate-200" />
+        <View className="flex-1 items-center">
+          <Text className="text-base font-black text-amber-600">{deactivatedProperties}</Text>
+          <Text className="mt-0.5 text-[10px] text-slate-500">Deactivated</Text>
+        </View>
+        <View className="w-px bg-slate-200" />
+        <View className="flex-1 items-center">
+          <Text className="text-base font-black text-slate-900">{inquiriesCount}</Text>
+          <Text className="mt-0.5 text-[10px] text-slate-500">Enquiries</Text>
+        </View>
+      </View>
+
+      <View className="mx-5 mt-3 rounded-2xl bg-slate-950 p-4">
+        <View className="flex-row items-center justify-between">
+          <View>
+            <Text className="text-sm font-bold text-white">Free listing plan</Text>
+            <Text className="mt-1 text-xs text-slate-300">{activeProperties} of {listingCapacity} live slots used</Text>
+            {pendingProperties > 0 && <Text className="mt-1 text-[11px] font-semibold text-amber-300">{pendingProperties} awaiting admin approval</Text>}
           </View>
-        }
-      />
+          <View className="rounded-full bg-white/10 px-3 py-1.5">
+            <Text className="text-[10px] font-bold text-amber-300">PAYMENT SOON</Text>
+          </View>
+        </View>
+        <Text className="mt-3 text-[11px] leading-4 text-slate-400">Premium upgrades are currently in testing. Payment is not collected from this app yet.</Text>
+      </View>
+
+      <View className="mx-5 mt-5">
+        <Text className="text-sm font-bold text-slate-900">My properties</Text>
+        {properties.length === 0 ? (
+          <Text className="mt-2 text-xs text-slate-500">You have not listed a property yet.</Text>
+        ) : properties.slice(0, 5).map((property) => (
+          <TouchableOpacity
+            key={property.id}
+            disabled={!onSelectProperty}
+            onPress={() => onSelectProperty?.(property)}
+            className="mt-2 rounded-xl border border-slate-200 bg-white p-3"
+          >
+            <View className="flex-row items-center justify-between">
+              <Text className="mr-3 flex-1 text-xs font-bold text-slate-900" numberOfLines={1}>{property.title}</Text>
+              <Text className="text-[10px] font-bold text-slate-500">{property.status}</Text>
+            </View>
+            <Text className="mt-1 text-[11px] text-slate-500" numberOfLines={1}>{property.location || property.city}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      <View className="mx-5 mt-6 mb-8 space-y-3">
+        <TouchableOpacity
+          onPress={onOpenAdmin}
+          activeOpacity={0.85}
+          className="w-full border border-slate-300 bg-white py-3.5 rounded-full flex-row items-center justify-center"
+        >
+          <Settings size={16} color="#0f172a" />
+          <Text className="ml-2 text-sm font-bold text-slate-900">Admin Panel</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          onPress={() =>
+            Alert.alert('Sign out', 'Sign out of this session?', [
+              { text: 'Cancel', style: 'cancel' },
+              { text: 'Sign out', style: 'destructive', onPress: onLogout },
+            ])
+          }
+          activeOpacity={0.8}
+          className="w-full border border-red-200 bg-red-50 py-3.5 rounded-full flex-row items-center justify-center mt-2.5"
+        >
+          <LogOut size={16} color="#dc2626" />
+          <Text className="ml-2 text-sm font-bold text-red-600">Sign Out</Text>
+        </TouchableOpacity>
+      </View>
     </ScrollView>
   );
 };

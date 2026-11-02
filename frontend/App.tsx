@@ -19,6 +19,7 @@ import {
   updateInquiryStatus,
   updateMyProfile,
   updateProviderListingStatus,
+  type ProviderListingStatusAction,
   uploadLegacyPropertyImage,
 } from './src/core/api/investormart';
 
@@ -143,15 +144,28 @@ export default function App() {
   const handleDeleteProperty = async (id: string) => {
     const property = properties.find((item) => item.id === id);
     if (!property || !session || property.readOnly) return;
-    const listing = await updateProviderListingStatus(session.accessToken, property, 'archived');
-    setProperties((current) => current.map((item) => item.id === id ? listing : item));
+    try {
+      await updateProviderListingStatus(session.accessToken, property, 'delete');
+      // Provider deletion is a soft delete in the legacy database. It is no
+      // longer returned by the provider API, so remove it from this device too.
+      setProperties((current) => current.filter((item) => item.id !== id));
+    } catch {
+      Alert.alert('Unable to delete property', 'Please try again. Your property has not been removed.');
+    }
   };
 
-  const handleTogglePropertyStatus = async (id: string) => {
+  const handleChangePropertyStatus = async (id: string, action: ProviderListingStatusAction) => {
     const property = properties.find((item) => item.id === id);
     if (!property || !session || property.readOnly) return;
-    const listing = await updateProviderListingStatus(session.accessToken, property, property.status === 'ACTIVE' ? 'paused' : 'active');
-    setProperties((current) => current.map((item) => item.id === id ? listing : item));
+    try {
+      const listing = await updateProviderListingStatus(session.accessToken, property, action);
+      setProperties((current) => current.map((item) => item.id === id ? listing : item));
+      if (action === 'restore') {
+        Alert.alert('Sent for approval', 'The property has been restored and sent to the admin for approval before it becomes live.');
+      }
+    } catch {
+      Alert.alert('Unable to update property', 'Please try again. The property status was not changed.');
+    }
   };
 
   const handleBookingSubmit = async (newInquiry: Inquiry) => {
@@ -293,7 +307,7 @@ export default function App() {
               onOpenAddModal={() => setAddPropertyModalVisible(true)}
               onSelectProperty={(prop) => setDetailProperty(prop)}
               onDeleteProperty={handleDeleteProperty}
-              onToggleStatus={handleTogglePropertyStatus}
+              onChangeStatus={handleChangePropertyStatus}
               builderName={currentUser.companyName || currentUser.name}
               listingCapacity={listingCapacity}
             />
@@ -305,7 +319,7 @@ export default function App() {
               onOpenAddModal={() => setAddPropertyModalVisible(true)}
               onSelectProperty={(prop) => setDetailProperty(prop)}
               onDeleteProperty={handleDeleteProperty}
-              onToggleStatus={handleTogglePropertyStatus}
+              onChangeStatus={handleChangePropertyStatus}
               onBack={() => setActiveBuilderTab('home')}
             />
           );
@@ -327,6 +341,7 @@ export default function App() {
               onLogout={() => { void handleLogout(); }}
               propertiesCount={properties.length}
               inquiriesCount={inquiries.length}
+              listingCapacity={listingCapacity}
               properties={properties}
               onSelectProperty={(prop) => setDetailProperty(prop)}
               favoriteIds={favoriteIds}

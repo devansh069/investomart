@@ -72,6 +72,9 @@ export function mapAccount(account: StoredSession['account']): User {
     email: account.email || '',
     phone: account.phone,
     role: ['builder', 'owner', 'broker'].includes(account.role) ? 'builder' : 'customer',
+    providerType: account.provider_type || (
+      account.role === 'builder' || account.role === 'owner' || account.role === 'broker' ? account.role : undefined
+    ),
     companyName: account.company_name || undefined,
   };
 }
@@ -117,6 +120,7 @@ export function mapInquiry(inquiry: ApiInquiry): Inquiry {
   const property = inquiry.property ? mapListing(inquiry.property) : undefined;
   return {
     id: inquiry.id,
+    channel: inquiry.channel.toUpperCase() as Inquiry['channel'],
     propertyId: property?.id || '',
     propertyTitle: property?.title || 'Property',
     propertyRent: property?.rent || 0,
@@ -229,7 +233,9 @@ export async function uploadLegacyPropertyImage(token: string, image: PropertyUp
   return upload.object_key;
 }
 
-export async function updateProviderListingStatus(token: string, property: Property, status: 'active' | 'paused' | 'archived'): Promise<Property> {
+export type ProviderListingStatusAction = 'paused' | 'archived' | 'restore' | 'delete';
+
+export async function updateProviderListingStatus(token: string, property: Property, status: ProviderListingStatusAction): Promise<Property> {
   const response = await apiRequest<{ listing: ApiListing }>(`provider/listings/${property.sourceId}/status`, { method: 'PATCH', accessToken: token, body: { status } });
   return mapListing(response.data.listing);
 }

@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Alert, Image } from 'react-native';
 import { Property, Inquiry } from '../../../types';
+import type { ProviderListingStatusAction } from '../../../core/api/investormart';
 import { Plus, Eye, CheckCircle2, MessageSquare, Trash2, BedDouble, MapPin, Crown } from 'lucide-react-native';
 
 interface BuilderDashboardProps {
@@ -9,7 +10,7 @@ interface BuilderDashboardProps {
   onOpenAddModal: () => void;
   onSelectProperty: (property: Property) => void;
   onDeleteProperty: (id: string) => void;
-  onToggleStatus: (id: string) => void;
+  onChangeStatus: (id: string, action: ProviderListingStatusAction) => void;
   builderName: string;
   listingCapacity?: number;
 }
@@ -20,7 +21,7 @@ export const BuilderDashboard: React.FC<BuilderDashboardProps> = ({
   onOpenAddModal,
   onSelectProperty,
   onDeleteProperty,
-  onToggleStatus,
+  onChangeStatus,
   builderName,
   listingCapacity = 10,
 }) => {
@@ -29,6 +30,15 @@ export const BuilderDashboard: React.FC<BuilderDashboardProps> = ({
   const pausedListings = properties.filter((p) => p.status === 'PAUSED' || p.status === 'EXPIRED' || p.status === 'PLAN_HOLD').length;
   const totalInquiries = inquiries.length;
   const remainingFreeSlots = Math.max(0, listingCapacity - activeListings);
+  const listingAction = (property: Property): { label: string; action: ProviderListingStatusAction; message: string } | null => {
+    if (property.status === 'ACTIVE') {
+      return { label: 'Deactivate', action: 'paused', message: 'This property will be hidden from clients until you restore it.' };
+    }
+    if (property.status === 'PAUSED' || property.status === 'ARCHIVED') {
+      return { label: 'Restore', action: 'restore', message: 'This property will be sent for admin approval before it becomes live.' };
+    }
+    return null;
+  };
 
   return (
     <ScrollView className="flex-1 bg-slate-50 px-5 pt-3" showsVerticalScrollIndicator={false}>
@@ -110,8 +120,7 @@ export const BuilderDashboard: React.FC<BuilderDashboardProps> = ({
                   <Text className="text-sm font-bold text-slate-900 flex-1 mr-1 leading-snug" numberOfLines={1}>
                     {prop.title}
                   </Text>
-                  <TouchableOpacity
-                    onPress={() => onToggleStatus(prop.id)}
+                  <View
                     className={`px-2 py-0.5 rounded-md ${
                       prop.status === 'ACTIVE' ? 'bg-emerald-50 border border-emerald-200' : prop.status === 'RENTED' ? 'bg-slate-100' : 'bg-amber-50 border border-amber-200'
                     }`}
@@ -123,7 +132,7 @@ export const BuilderDashboard: React.FC<BuilderDashboardProps> = ({
                     >
                       {prop.status}
                     </Text>
-                  </TouchableOpacity>
+                  </View>
                 </View>
 
                 <View className="flex-row items-center mt-1">
@@ -154,27 +163,31 @@ export const BuilderDashboard: React.FC<BuilderDashboardProps> = ({
               className="flex-row items-center bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200"
             >
               <Eye size={13} color="#2563eb" />
-              <Text className="text-xs font-semibold text-slate-700 ml-1.5">View as Customer</Text>
+              <Text className="text-xs font-semibold text-slate-700 ml-1.5">View details</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity
-              onPress={() => {
+            {listingAction(prop) && (
+              <TouchableOpacity
+                onPress={() => {
+                  const next = listingAction(prop)!;
                 Alert.alert(
-                  'Mark Status',
-                  `Switch status of "${prop.title}" to ${prop.status === 'ACTIVE' ? 'PAUSED' : 'ACTIVE'}?`,
+                  `${next.label} property`,
+                  next.message,
                   [
                     { text: 'Cancel', style: 'cancel' },
-                    { text: 'Change', onPress: () => onToggleStatus(prop.id) },
+                    {
+                      text: next.label,
+                      onPress: () => onChangeStatus(prop.id, next.action),
+                    },
                   ]
                 );
-              }}
-              className="flex-row items-center bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200"
-            >
-              <CheckCircle2 size={13} color="#059669" />
-              <Text className="text-xs font-semibold text-slate-700 ml-1.5">
-                Toggle Status
-              </Text>
-            </TouchableOpacity>
+                }}
+                className="flex-row items-center bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200"
+              >
+                <CheckCircle2 size={13} color="#059669" />
+                <Text className="text-xs font-semibold text-slate-700 ml-1.5">{listingAction(prop)!.label}</Text>
+              </TouchableOpacity>
+            )}
 
             <TouchableOpacity
               onPress={() => {
