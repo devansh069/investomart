@@ -94,7 +94,7 @@ class ListingPresenter
             'description' => $property->por_overview ?: '',
             'amenities' => $amenities,
             'image_url' => $image,
-            'images' => array_values(array_filter(array_map(fn ($key) => $this->legacyUrl($property->{$key} ?? null), ['por_img_1', 'por_img_2', 'por_img_3', 'por_img_4', 'por_img_5']))),
+            'images' => array_values(array_filter(array_map(fn ($key) => $this->legacyUrl($property->{$key} ?? null), ['por_img_1', 'por_img_2', 'por_img_3', 'por_img_4', 'por_img_5', 'por_img_6', 'por_img_7']))),
             'status' => $this->legacyWorkflowStatus($property),
             'approval_status' => $this->legacyApprovalStatus($property),
             'provider_status' => in_array(($property->mobile_status ?? null), ['paused', 'archived'], true) ? $property->mobile_status : 'active',

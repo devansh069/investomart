@@ -191,6 +191,39 @@ export async function createProviderListing(token: string, payload: Record<strin
   return mapListing(response.data.listing);
 }
 
+export type PropertyUploadInput = {
+  uri: string;
+  filename: string;
+  contentType: 'image/jpeg' | 'image/png' | 'image/webp';
+  sizeBytes: number;
+};
+
+type PresignedUpload = {
+  upload_url: string;
+  object_key: string;
+  expires_at: string;
+  headers?: Record<string, string>;
+};
+
+/** Uploads a selected device image directly to S3 using a short-lived API URL. */
+export async function uploadLegacyPropertyImage(token: string, image: PropertyUploadInput): Promise<string> {
+  const response = await apiRequest<{ upload: PresignedUpload }>('provider/property-media/upload-url', {
+    method: 'POST', accessToken: token,
+    body: { filename: image.filename, content_type: image.contentType, size_bytes: image.sizeBytes },
+  });
+  const source = await fetch(image.uri);
+  if (!source.ok) throw new Error('Unable to read the selected property image.');
+  const body = await source.blob();
+  const upload = response.data.upload;
+  const result = await fetch(upload.upload_url, {
+    method: 'PUT',
+    headers: { 'Content-Type': image.contentType, ...(upload.headers ?? {}) },
+    body,
+  });
+  if (!result.ok) throw new Error('Unable to upload a property image. Please try again.');
+  return upload.object_key;
+}
+
 export async function updateProviderListingStatus(token: string, property: Property, status: 'active' | 'paused' | 'archived'): Promise<Property> {
   const response = await apiRequest<{ listing: ApiListing }>(`provider/listings/${property.sourceId}/status`, { method: 'PATCH', accessToken: token, body: { status } });
   return mapListing(response.data.listing);

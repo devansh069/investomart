@@ -19,6 +19,7 @@ import {
   updateInquiryStatus,
   updateMyProfile,
   updateProviderListingStatus,
+  uploadLegacyPropertyImage,
 } from './src/core/api/investormart';
 
 import { BottomNav, CustomerTabKey, BuilderTabKey } from './src/shared/components/BottomNav';
@@ -26,7 +27,7 @@ import { CustomerHome } from './src/features/discovery/components/CustomerHome';
 import { PropertyDetailModal } from './src/features/discovery/components/PropertyDetailModal';
 import { RentBookingModal } from './src/features/booking/components/RentBookingModal';
 import { FilterModal } from './src/features/discovery/components/FilterModal';
-import { AddPropertyModal } from './src/features/broker/components/AddPropertyModal';
+import { AddPropertyModal, type PropertyListingDraft } from './src/features/broker/components/AddPropertyModal';
 import { BuilderDashboard } from './src/features/broker/components/BuilderDashboard';
 import { BuilderPropertiesScreen } from './src/features/broker/components/BuilderPropertiesScreen';
 import { InquiriesScreen } from './src/features/broker/components/InquiriesScreen';
@@ -121,17 +122,18 @@ export default function App() {
   }, [loadAuthenticatedData, loadPublicListings]);
 
   // Handlers
-  const handleAddProperty = async (newProperty: Property) => {
+  const handleAddProperty = async (draft: PropertyListingDraft) => {
     if (!session) throw new Error('Please sign in before adding a property.');
+    const imageKeys: string[] = [];
+    for (const image of draft.images) {
+      imageKeys.push(await uploadLegacyPropertyImage(session.accessToken, image));
+    }
+    const { images, ...propertyPayload } = draft;
     const listing = await createProviderListing(session.accessToken, {
-      title: newProperty.title, property_type: newProperty.type, listing_type: newProperty.listingType,
-      price: newProperty.rent, price_period: newProperty.listingType === 'Rent' ? '/month' : null,
-      bedrooms: `${newProperty.bhk} BHK`, bathrooms: newProperty.bathrooms, area: newProperty.areaSqft,
-      area_unit: 'sq.ft', furnishing: newProperty.furnishing, deposit: newProperty.deposit,
-      city: newProperty.city || 'Noida', location: newProperty.location, address: newProperty.address,
-      description: newProperty.description, amenities: newProperty.amenities,
-      primary_image_url: newProperty.imageUrl, media: [newProperty.imageUrl, ...(newProperty.additionalImages || [])],
-      contact_name: currentUser.companyName || currentUser.name, contact_phone: currentUser.phone,
+      ...propertyPayload,
+      cover_image: imageKeys[0],
+      gallery_images: imageKeys,
+      contact_phone: currentUser.phone,
     });
     setProperties((current) => [listing, ...current]);
   };
@@ -485,8 +487,6 @@ export default function App() {
           visible={addPropertyModalVisible}
           onClose={() => setAddPropertyModalVisible(false)}
           onAddProperty={handleAddProperty}
-          builderName={currentUser.companyName || currentUser.name}
-          builderPhone={currentUser.phone}
         />
         </>}
       </SafeAreaView>

@@ -6,6 +6,7 @@ return [
     'legacy_media_base_url' => rtrim((string) env('INVESTORMART_LEGACY_MEDIA_BASE_URL', ''), '/'),
     'legacy_property_media_prefix' => trim((string) env('INVESTORMART_LEGACY_PROPERTY_MEDIA_PREFIX', 'property_folder/property_gallary'), '/'),
     'media_public_base_url' => rtrim((string) env('INVESTORMART_MEDIA_PUBLIC_BASE_URL', ''), '/'),
+    'mobile_property_upload_prefix' => trim((string) env('INVESTORMART_MOBILE_PROPERTY_UPLOAD_PREFIX', 'properties/mobile'), '/'),
     'admin_mobile_numbers' => array_filter(array_map(
         static fn (string $number): string => preg_replace('/\D+/', '', $number) ?? '',
         explode(',', (string) env('INVESTORMART_ADMIN_MOBILE_NUMBERS', '')),

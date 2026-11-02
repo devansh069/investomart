@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\V1\Listings\PropertyMasterController;
 use App\Http\Controllers\Api\V1\Listings\PublicListingController;
 use App\Http\Controllers\Api\V1\Payments\PlanController;
 use App\Http\Controllers\Api\V1\Payments\RazorpayWebhookController;
+use App\Http\Controllers\Api\V1\Provider\LegacyPropertyMediaController;
 use App\Http\Controllers\Api\V1\Provider\ListingMediaController;
 use App\Http\Controllers\Api\V1\Provider\ProviderListingController;
 use App\Http\Controllers\Api\V1\System\HealthController;
@@ -53,6 +54,7 @@ Route::prefix('v1')->group(function (): void {
             Route::get('/dashboard', [ProviderListingController::class, 'dashboard']);
             Route::get('/listings', [ProviderListingController::class, 'index']);
             Route::post('/listings', [ProviderListingController::class, 'store']);
+            Route::post('/property-media/upload-url', [LegacyPropertyMediaController::class, 'uploadUrl']);
             Route::patch('/listings/{id}', [ProviderListingController::class, 'update'])->whereNumber('id');
             Route::patch('/listings/{id}/status', [ProviderListingController::class, 'updateStatus'])->whereNumber('id');
             Route::post('/listings/{id}/media/upload-url', [ListingMediaController::class, 'uploadUrl']);
